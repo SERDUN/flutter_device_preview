@@ -202,7 +202,7 @@ class DeviceSimulation {
   /// Whether the host's pointers are delivered to the app as touches.
   ///
   /// [touchInput] when it is set; otherwise auto — the simulated device
-  /// decides. A phone, a tablet or a foldable is a touchscreen; a desktop
+  /// decides. A phone, a tablet, a foldable or a watch is a touchscreen; a desktop
   /// window is not. Without a [deviceKind] there is no device to follow (the
   /// real one, or a custom size), so the host's own pointers are used.
   bool get simulatesTouch =>

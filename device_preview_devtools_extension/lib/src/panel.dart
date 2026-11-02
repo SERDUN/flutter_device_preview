@@ -454,11 +454,12 @@ class _PresetPickerDialog extends StatefulWidget {
 class _PresetPickerDialogState extends State<_PresetPickerDialog> {
   String _query = '';
 
-  static const _kindOrder = ['phone', 'tablet', 'foldable', 'desktop'];
+  static const _kindOrder = ['phone', 'tablet', 'foldable', 'watch', 'desktop'];
   static const _kindLabels = {
     'phone': 'Phones',
     'tablet': 'Tablets',
     'foldable': 'Foldables',
+    'watch': 'Watches',
     'desktop': 'Desktop windows',
   };
 

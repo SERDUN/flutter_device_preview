@@ -70,7 +70,13 @@ const Set<String> kPlatforms = <String>{
 };
 
 /// `DeviceKind` member names.
-const Set<String> kKinds = <String>{'phone', 'tablet', 'foldable', 'desktop'};
+const Set<String> kKinds = <String>{
+  'phone',
+  'tablet',
+  'foldable',
+  'desktop',
+  'watch',
+};
 
 Future<void> main(List<String> arguments) async {
   final bool check = arguments.contains('--check');

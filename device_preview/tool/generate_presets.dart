@@ -32,7 +32,13 @@ const Set<String> kPlatforms = <String>{
 };
 
 /// `DeviceKind` member names.
-const Set<String> kKinds = <String>{'phone', 'tablet', 'foldable', 'desktop'};
+const Set<String> kKinds = <String>{
+  'phone',
+  'tablet',
+  'foldable',
+  'desktop',
+  'watch',
+};
 
 /// `ui.DisplayFeatureType` member names.
 const Set<String> kFeatureTypes = <String>{'fold', 'hinge', 'cutout'};
