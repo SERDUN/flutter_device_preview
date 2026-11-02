@@ -337,13 +337,21 @@ def mask_subpaths(pdf_path):
     doc = pymupdf.open(pdf_path)
     page = doc[0]
     stream = b" ".join(doc.xref_stream(x) for x in page.get_contents())
-    # Some masks (Apple Watch SE) draw the outline inside a form XObject
-    # placed with `Do` and no matrix of its own: its stream is in the same
-    # page space, so it is read after the page's.
-    for xref, *_ in page.get_xobjects():
-        if "/Matrix" not in doc.xref_object(xref):
-            stream += b" " + doc.xref_stream(xref)
     tokens = stream.decode("latin-1").split()
+    # Some masks (Apple Watch SE) draw the outline inside a form XObject
+    # placed with `/Name Do`: its stream is spliced in at that point, inside
+    # q/Q and under its own /Matrix, so it is read with the CTM in force
+    # where it is drawn - and not at all when it is never drawn.
+    forms = {name: xref for xref, name, *_ in page.get_xobjects()}
+
+    def form_tokens(name):
+        xref = forms.get(name.lstrip("/"))
+        if xref is None:
+            return []
+        kind, matrix = doc.xref_get_key(xref, "Matrix")
+        cm = matrix.strip("[]").split() + ["cm"] if kind == "array" else []
+        return ["q"] + cm + \
+            doc.xref_stream(xref).decode("latin-1").split() + ["Q"]
     best, current, stack = None, [], []
     ctm, saved = (1, 0, 0, 1, 0, 0), []
 
@@ -363,12 +371,24 @@ def mask_subpaths(pdf_path):
         if current and (best is None or curves > best[0]):
             best = (curves, current)
 
-    for token in tokens:
+    name = None
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        i += 1
         try:
             stack.append(float(token))
             continue
         except ValueError:
             pass
+        if token.startswith("/"):
+            name = token
+            continue
+        if token == "Do":
+            if name is not None:
+                tokens[i:i] = form_tokens(name)
+            name = None
+            continue
         if token == "q":
             saved.append(ctm)
         elif token == "Q":
@@ -549,11 +569,13 @@ def home_button(resources, chrome, body, face_color):
             ("circle", (cx, cy, r - stroke["width"]), face_color, 1.0)]
 
 
-def body_svg(size, shapes, radius, case=None):
-    """`case` is the size the rings are drawn at when the frame is larger
-    than the case (a watch crown sticking out); it defaults to `size`."""
+def body_svg(size, shapes, radius, case=None, case_origin=(0, 0)):
+    """`case` and `case_origin` place the rings when the frame is larger
+    than the case (a watch crown sticking out); they default to the whole
+    frame."""
     lines = [f'<svg viewBox="0 0 {fmt(size[0])} {fmt(size[1])}">']
     w, h = case or size
+    cx0, cy0 = case_origin
     for shape in shapes:
         kind, color, opacity = shape[0], shape[-2], shape[-1]
         tag = "rect"
@@ -563,7 +585,7 @@ def body_svg(size, shapes, radius, case=None):
             ix, iy = shape[1] if isinstance(shape[1], tuple) else \
                 (shape[1], shape[1])
             r = max(0.0, radius - min(ix, iy))
-            attrs = (f'x="{fmt(ix)}" y="{fmt(iy)}" '
+            attrs = (f'x="{fmt(cx0 + ix)}" y="{fmt(cy0 + iy)}" '
                      f'width="{fmt(w - 2 * ix)}" '
                      f'height="{fmt(h - 2 * iy)}" rx="{fmt(r)}"')
         elif kind == "button":
@@ -599,8 +621,10 @@ def watch_rings(resources, chrome, logical):
     w becomes a fill w/2 outside its rect. The outermost opaque gray fill
     is the body: anything painted before it is covered by it and dropped,
     and insets and the border are measured from its origin. Colored shapes
-    (guides, tints) are not bezel. Returns (rings, (border_x, border_y))
-    with rings as ("ring", (ix, iy), color, opacity) in paint order.
+    (guides, tints) are not bezel. Returns (rings, (border_x, border_y),
+    (origin_x, origin_y)): the rings as ("ring", (ix, iy), color, opacity)
+    in paint order, the screen offset inside the case, and the case's
+    origin in tile (chrome window) coordinates.
     """
     tile = os.path.join(resources, chrome["images"]["topLeft"] + ".pdf")
     page = pymupdf.open(tile)[0]
@@ -608,6 +632,10 @@ def watch_rings(resources, chrome, logical):
 
     def gray(color):
         return color is not None and max(color) - min(color) < 0.01
+
+    def opaque(d):
+        opacity = d.get("fill_opacity")
+        return opacity is None or opacity >= 1.0
 
     rings, strokes, guide = [], [], None
     for d in page.get_drawings():
@@ -622,10 +650,10 @@ def watch_rings(resources, chrome, logical):
                 gray(d.get("color")):
             strokes.append(rect)
             half = d["width"] / 2
-            rings.append(((rect.x0 - half, rect.y0 - half), rect,
+            rings.append(((rect.x0 - half, rect.y0 - half), None,
                           d["color"]))
         elif d["type"] == "f" and reaches and gray(d.get("fill")) and \
-                (d.get("fill_opacity") or 1.0) >= 1.0:
+                opaque(d):
             rings.append(((rect.x0, rect.y0), rect, d["fill"]))
     if not rings:
         sys.exit(f"error: no rings in {tile}")
@@ -634,19 +662,24 @@ def watch_rings(resources, chrome, logical):
         # around the body, not rings centered on the screen: the guide is
         # the screen and the fills are the rings.
         screen = (guide.x0, guide.y0)
-        rings = [ring for ring in rings if ring[1] not in strokes]
+        rings = [ring for ring in rings if ring[1] is not None]
     elif strokes:
         screen = (strokes[0].x0, strokes[0].y0)
     else:
-        face = rings[-1][1]
+        face = next(ring[1] for ring in reversed(rings)
+                    if ring[1] is not None)
         screen = (face.x0 + (face.width - logical[0]) / 2,
                   face.y0 + (face.height - logical[1]) / 2)
     body = min(range(len(rings)), key=lambda i: sum(rings[i][0]))
     ox, oy = rings[body][0]
     shapes = []
-    for (x, y), _, color in rings[body:]:
-        # The screen face itself: covered by the app, not a ring.
-        if abs(x - screen[0]) <= 1 and abs(y - screen[1]) <= 1:
+    for (x, y), rect, color in rings[body:]:
+        # The screen face itself - a fill starting at the screen origin, give
+        # or take its antialiasing pixel (the tile clips it, so its size
+        # says nothing) - is covered by the app, not a ring. Strokes (rect
+        # None) are always rings, however thin.
+        if rect is not None and abs(x - screen[0]) <= 1 and \
+                abs(y - screen[1]) <= 1:
             continue
         shapes.append(("ring", (round(x - ox, 2), round(y - oy, 2)),
                        color, 1.0))
@@ -686,7 +719,8 @@ def watch_buttons(resources, chrome, logical, origin):
         y0 = offset["y"] - origin[1]
         shapes = []
         for d in page.get_drawings():
-            if d["type"] != "f" or (d.get("fill_opacity") or 1.0) < 1.0:
+            opacity = d.get("fill_opacity")
+            if d["type"] != "f" or (opacity is not None and opacity < 1.0):
                 continue
             rect = d["rect"] & page.rect
             if rect.is_empty or rect.width < 0.5 or rect.height < 0.5:
@@ -736,11 +770,24 @@ def update_watch_spec(dev, spec_id, mapping, dry_run):
     shapes, border, origin = watch_rings(resources, chrome, logical)
     body = (logical[0] + 2 * border[0], logical[1] + 2 * border[1])
     under, over = watch_buttons(resources, chrome, logical, origin)
-    shapes = under + shapes + over
-    # The crown sticks out past the case: the frame grows to hold it (the
-    # screen keeps its offset, the case its size).
-    right = max([body[0]] + [x + w for _, (x, _, w, _), _, _ in under + over])
-    body_size = (math.ceil(right * 100) / 100, body[1])
+    # Buttons that stick out past the case (the crown, on the right) grow
+    # the frame on that side; one sticking out left or above shifts the case,
+    # the rings and the screen offset by as much.
+    buttons = under + over
+    left = min([0.0] + [x for _, (x, _, _, _), _, _ in buttons])
+    top = min([0.0] + [y for _, (_, y, _, _), _, _ in buttons])
+    right = max([body[0]] + [x + w for _, (x, _, w, _), _, _ in buttons])
+    bottom = max([body[1]] + [y + h for _, (_, y, _, h), _, _ in buttons])
+    shift = (-left, -top)
+
+    def moved(group):
+        return [("button", (x + shift[0], y + shift[1], w, h), c, o)
+                for _, (x, y, w, h), c, o in group]
+
+    shapes = moved(under) + shapes + moved(over)
+    border = (border[0] + shift[0], border[1] + shift[1])
+    body_size = (math.ceil((right - left) * 100) / 100,
+                 math.ceil((bottom - top) * 100) / 100)
     mask = os.path.join(resources_dir, profile["framebufferMask"] + ".pdf")
     spec["frame"] = {
         "size": {"width": fmt_json(body_size[0]),
@@ -748,7 +795,8 @@ def update_watch_spec(dev, spec_id, mapping, dry_run):
         "screenOffset": {"x": fmt_json(border[0]),
                          "y": fmt_json(border[1])},
         "screenPath": screen_path(mask, scale, logical, None),
-        "body": body_svg(body_size, shapes, radius, case=body),
+        "body": body_svg(body_size, shapes, radius, case=body,
+                         case_origin=shift),
     }
     print(f"  frame: body {fmt(body[0])}x{fmt(body[1])} "
           f"border {fmt(border[0])},{fmt(border[1])}"

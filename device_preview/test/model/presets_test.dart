@@ -133,10 +133,22 @@ void main() {
       }
       // The smallest Apple Watch screen is narrower than the smallest Wear OS
       // one.
+      final se = DevicePresets.byId('apple-watch-se-3-40mm')!.portraitSize;
+      expect(se, const Size(162, 197));
       expect(
-        DevicePresets.byId('apple-watch-se-3-40mm')!.portraitSize,
-        const Size(162, 197),
+        se.width,
+        lessThan(DevicePresets.byId('wear-os-small-round')!.portraitSize.width),
       );
+    });
+
+    test('a watch resolves to portrait whatever the orientation', () {
+      for (final preset in DevicePresets.all.where(
+        (p) => p.kind == DeviceKind.watch,
+      )) {
+        final landscape = preset.resolve(orientation: Orientation.landscape);
+        expect(landscape.orientation, Orientation.portrait, reason: preset.id);
+        expect(landscape.screenSize, preset.portraitSize, reason: preset.id);
+      }
     });
 
     test('byId finds every catalog entry', () {

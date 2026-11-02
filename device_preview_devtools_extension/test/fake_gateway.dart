@@ -250,6 +250,16 @@ const Map<String, Object?> testNotchedPresetJson = <String, Object?>{
 };
 
 /// A second preset (tablet) used across tests.
+/// A watch preset, used by the rotation tests.
+const Map<String, Object?> testWatchPresetJson = <String, Object?>{
+  'id': 'test-watch',
+  'name': 'Test Watch',
+  'platform': 'android',
+  'kind': 'watch',
+  'portraitSize': {'width': 192, 'height': 192},
+  'devicePixelRatio': 2.0,
+};
+
 const Map<String, Object?> testTabletPresetJson = <String, Object?>{
   'id': 'test-tablet',
   'name': 'Test Tablet',
