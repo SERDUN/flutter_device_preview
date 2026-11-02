@@ -44,11 +44,14 @@ void main() {
     },
   );
 
-  test('every preset carries its frame, and system UI on mobile devices', () {
+  test('every preset carries its frame, and system UI where it has bars', () {
     for (final preset in DevicePresets.all) {
       expect(preset.frame, isNotNull, reason: preset.id);
       expect(preset.frame!.body, isNotEmpty, reason: preset.id);
-      if (preset.kind != DeviceKind.desktop) {
+      // A desktop window has no system bars, and Wear OS draws none over an
+      // app.
+      if (preset.kind != DeviceKind.desktop &&
+          preset.kind != DeviceKind.watch) {
         expect(preset.systemUi, isNotNull, reason: preset.id);
       }
     }

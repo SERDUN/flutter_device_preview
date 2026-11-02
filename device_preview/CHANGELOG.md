@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- **Watches**: a new `DeviceKind.watch` and three round Wear OS presets -
+  `wear-os-small-round` (192 dp), `wear-os-large-round` (227 dp) and
+  `wear-os-xl-round` (240 dp), the Android emulator's reference watches,
+  derived from its skins and probed on a Wear OS 6 image. A circular screen
+  inside a round body, no system bars, no keyboard. They sit under
+  **Watches** in the DevTools picker; a watch is a touchscreen for
+  `touchInput`'s auto mode.
+
 ## 3.0.0
 
 The stable 3.0 release — a from-scratch rebuild of Device Preview. If you are
