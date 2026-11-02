@@ -54,6 +54,10 @@ const Set<String> kFeatureStates = <String>{
 const Map<String, String> kNameOverrides = <String, String>{
   'desktop-small': 'smallDesktopWindow',
   'desktop-large': 'largeDesktopWindow',
+  'apple-watch-se-3-40mm': 'appleWatchSe3Mm40',
+  'apple-watch-series-12-42mm': 'appleWatchSeries12Mm42',
+  'apple-watch-series-12-46mm': 'appleWatchSeries12Mm46',
+  'apple-watch-ultra-4-49mm': 'appleWatchUltra4Mm49',
 };
 
 /// Id tokens with a spelling other than plain capitalization.
@@ -68,6 +72,16 @@ const Map<String, String> kTokenSpellings = <String, String>{
 /// line; add its entry here when there is more to say (display size, notch
 /// vs. island, fold orientation, …).
 const Map<String, String> kDescriptions = <String, String>{
+  'apple-watch-se-3-40mm':
+      'Apple Watch SE 3, 40 mm case — the smallest watchOS screen.',
+  'apple-watch-series-12-42mm': 'Apple Watch Series 12, 42 mm case.',
+  'apple-watch-series-12-46mm': 'Apple Watch Series 12, 46 mm case.',
+  'apple-watch-ultra-4-49mm': 'Apple Watch Ultra 4, 49 mm case.',
+  'wear-os-small-round':
+      'Wear OS Small Round — the emulator profile Wear OS design guidance '
+      'starts from.',
+  'wear-os-large-round': 'Wear OS Large Round — emulator profile.',
+  'wear-os-xl-round': 'Wear OS XL Round — emulator profile.',
   'apple-iphone-16': 'iPhone 16 — Dynamic Island.',
   'apple-iphone-16-plus': 'iPhone 16 Plus — Dynamic Island, 6.7" display.',
   'apple-iphone-16-pro': 'iPhone 16 Pro — Dynamic Island.',

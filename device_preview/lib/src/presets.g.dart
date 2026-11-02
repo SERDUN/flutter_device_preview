@@ -18,7 +18,7 @@ part of '../presets.dart';
 /// follow real UIKit behavior (notch/island mirrored to the
 /// sides, 21px home indicator).
 ///
-/// 36 devices.
+/// 40 devices.
 abstract final class DevicePresets {
   /// iPad (10th generation).
   static const DevicePreset iPad10 = DevicePreset(
@@ -1381,6 +1381,105 @@ abstract final class DevicePresets {
     ),
   );
 
+  /// Apple Watch SE 3, 40 mm case — the smallest watchOS screen.
+  static const DevicePreset appleWatchSe3Mm40 = DevicePreset(
+    id: 'apple-watch-se-3-40mm',
+    name: 'Apple Watch SE 3 (40mm)',
+    brand: 'Apple',
+    year: 2025,
+    platform: TargetPlatform.iOS,
+    portraitSize: ui.Size(162, 197),
+    devicePixelRatio: 2.0,
+    portraitPadding: EdgeInsets.zero,
+    kind: DeviceKind.watch,
+    frame: DeviceFrame(
+      size: ui.Size(218, 253),
+      screenOffset: ui.Offset(28, 28),
+      screenPath:
+          'M 81,196.99 C 121.43,196.99 119.95,197.03 126.54,196.96 C 131.06,196.92 135.37,196.79 139.23,196.07 C 147.47,194.54 154.63,189.83 158.6,181.84 C 161.08,176.83 161.68,171.63 161.88,165.98 C 161.99,162.93 161.99,160.79 162,155.21 C 162,148.61 162,140.71 162,98.5 C 162,56.29 162,48.4 162,41.79 C 161.99,36.21 161.99,34.08 161.88,31.01 C 161.68,25.37 161.08,20.17 158.6,15.16 C 154.63,7.17 147.47,2.45 139.23,0.93 C 135.37,0.21 131.06,0.09 126.54,0.04 C 119.95,-0.03 121.43,0.01 81,0.01 C 40.58,0.01 42.05,-0.03 35.46,0.04 C 30.94,0.09 26.63,0.21 22.77,0.93 C 14.53,2.45 7.37,7.17 3.4,15.16 C 0.92,20.17 0.32,25.37 0.12,31.01 C 0.01,34.08 0.01,36.21 0.01,41.79 C 0,48.4 0,56.29 0,98.5 C 0,140.71 0,148.61 0.01,155.21 C 0.01,160.79 0.01,162.93 0.12,165.98 C 0.32,171.63 0.92,176.83 3.4,181.84 C 7.37,189.83 14.53,194.54 22.77,196.07 C 26.63,196.79 30.94,196.92 35.46,196.96 C 42.05,197.03 40.58,196.99 81,196.99 Z',
+      body:
+          '<svg viewBox="0 0 218 253">\n'
+          '  <rect x="0" y="0" width="218" height="253" rx="54" fill="#1f1f1f"/>\n'
+          '  <rect x="7" y="7" width="204" height="239" rx="47" fill="#000000"/>\n'
+          '</svg>',
+    ),
+  );
+
+  /// Apple Watch Series 12, 42 mm case.
+  static const DevicePreset appleWatchSeries12Mm42 = DevicePreset(
+    id: 'apple-watch-series-12-42mm',
+    name: 'Apple Watch Series 12 (42mm)',
+    brand: 'Apple',
+    year: 2026,
+    platform: TargetPlatform.iOS,
+    portraitSize: ui.Size(187, 223),
+    devicePixelRatio: 2.0,
+    portraitPadding: EdgeInsets.zero,
+    kind: DeviceKind.watch,
+    frame: DeviceFrame(
+      size: ui.Size(228, 264),
+      screenOffset: ui.Offset(20.5, 20.5),
+      screenPath:
+          'M 57.69,0 L 129.31,0 C 149.37,0 156.65,2.09 163.98,6.01 C 171.31,9.93 177.07,15.69 180.99,23.02 C 184.91,30.35 187,37.63 187,57.69 L 187,165.31 C 187,185.37 184.91,192.65 180.99,199.98 C 177.07,207.31 171.31,213.07 163.98,216.99 C 156.65,220.91 149.37,223 129.31,223 L 57.69,223 C 37.63,223 30.35,220.91 23.02,216.99 C 15.69,213.07 9.93,207.31 6.01,199.98 C 2.09,192.65 0,185.37 0,165.31 L 0,57.69 C 0,37.63 2.09,30.35 6.01,23.02 C 9.93,15.69 15.69,9.93 23.02,6.01 C 30.35,2.09 37.63,0 57.69,0 Z',
+      body:
+          '<svg viewBox="0 0 228 264">\n'
+          '  <rect x="0" y="0" width="228" height="264" rx="65.5" fill="#000000"/>\n'
+          '  <rect x="1" y="1" width="226" height="262" rx="64.5" fill="#1f1f1f"/>\n'
+          '  <rect x="7.5" y="7.5" width="213" height="249" rx="58" fill="#000000"/>\n'
+          '</svg>',
+    ),
+  );
+
+  /// Apple Watch Series 12, 46 mm case.
+  static const DevicePreset appleWatchSeries12Mm46 = DevicePreset(
+    id: 'apple-watch-series-12-46mm',
+    name: 'Apple Watch Series 12 (46mm)',
+    brand: 'Apple',
+    year: 2026,
+    platform: TargetPlatform.iOS,
+    portraitSize: ui.Size(208, 248),
+    devicePixelRatio: 2.0,
+    portraitPadding: EdgeInsets.zero,
+    kind: DeviceKind.watch,
+    frame: DeviceFrame(
+      size: ui.Size(250, 290),
+      screenOffset: ui.Offset(21, 21),
+      screenPath:
+          'M 65.38,0 L 142.62,0 C 165.35,0 173.6,2.37 181.91,6.81 C 190.22,11.26 196.74,17.78 201.19,26.09 C 205.63,34.4 208,42.65 208,65.38 L 208,182.62 C 208,205.35 205.63,213.6 201.19,221.91 C 196.74,230.22 190.22,236.74 181.91,241.19 C 173.6,245.63 165.35,248 142.62,248 L 65.38,248 C 42.65,248 34.4,245.63 26.09,241.19 C 17.78,236.74 11.26,230.22 6.81,221.91 C 2.37,213.6 0,205.35 0,182.62 L 0,65.38 C 0,42.65 2.37,34.4 6.81,26.09 C 11.26,17.78 17.78,11.26 26.09,6.81 C 34.4,2.37 42.65,0 65.38,0 Z',
+      body:
+          '<svg viewBox="0 0 250 290">\n'
+          '  <rect x="0" y="0" width="250" height="290" rx="72.5" fill="#000000"/>\n'
+          '  <rect x="1" y="1" width="248" height="288" rx="71.5" fill="#1f1f1f"/>\n'
+          '  <rect x="7.5" y="7.5" width="235" height="275" rx="65" fill="#000000"/>\n'
+          '</svg>',
+    ),
+  );
+
+  /// Apple Watch Ultra 4, 49 mm case.
+  static const DevicePreset appleWatchUltra4Mm49 = DevicePreset(
+    id: 'apple-watch-ultra-4-49mm',
+    name: 'Apple Watch Ultra 4 (49mm)',
+    brand: 'Apple',
+    year: 2026,
+    platform: TargetPlatform.iOS,
+    portraitSize: ui.Size(211, 257),
+    devicePixelRatio: 2.0,
+    portraitPadding: EdgeInsets.zero,
+    kind: DeviceKind.watch,
+    frame: DeviceFrame(
+      size: ui.Size(270.96, 316.56),
+      screenOffset: ui.Offset(29.98, 29.78),
+      screenPath:
+          'M 210.88,73.97 C 210.72,62.94 210.33,55.39 209.33,48.71 C 208.33,42.04 206.68,36.23 204.15,30.89 C 201.64,25.58 198.29,20.84 194.22,16.77 C 190.16,12.71 185.42,9.36 180.11,6.85 C 174.76,4.32 168.96,2.68 162.31,1.67 C 155.67,0.66 148.24,0.28 139.23,0.13 C 131.08,-0.02 118.58,0 105.5,0 C 92.42,0 79.92,-0.02 71.77,0.13 C 62.76,0.28 55.33,0.66 48.69,1.67 C 42.04,2.68 36.24,4.32 30.89,6.85 C 25.58,9.36 20.84,12.71 16.78,16.77 C 12.71,20.84 9.36,25.58 6.85,30.89 C 4.32,36.23 2.67,42.04 1.67,48.71 C 0.66,55.39 0.28,62.94 0.12,73.97 C 0.05,79.53 0.02,86.33 0.01,94.93 C 0,103.62 0,114.32 0,128.5 C 0,142.68 0,153.37 0.01,162.07 C 0.02,170.67 0.05,177.47 0.12,183.03 C 0.28,194.06 0.66,201.61 1.67,208.29 C 2.67,214.96 4.32,220.77 6.85,226.11 C 9.36,231.42 12.71,236.16 16.78,240.22 C 20.84,244.29 25.58,247.64 30.89,250.15 C 36.24,252.68 42.04,254.32 48.69,255.33 C 55.33,256.34 62.76,256.72 71.77,256.87 C 79.92,257.02 92.42,257 105.5,257 C 118.58,257 131.08,257.02 139.23,256.87 C 148.24,256.72 155.67,256.34 162.31,255.33 C 168.96,254.32 174.76,252.68 180.11,250.15 C 185.42,247.64 190.16,244.29 194.22,240.22 C 198.29,236.16 201.64,231.42 204.15,226.11 C 206.68,220.77 208.33,214.96 209.33,208.29 C 210.33,201.61 210.72,194.06 210.88,183.03 C 210.95,177.47 210.98,170.67 210.99,162.07 C 211,153.37 211,142.68 211,128.5 C 211,114.32 211,103.62 210.99,94.93 C 210.98,86.33 210.95,79.53 210.88,73.97 Z',
+      body:
+          '<svg viewBox="0 0 270.96 316.56">\n'
+          '  <rect x="0" y="0" width="270.96" height="316.56" rx="85.2" fill="#1f1f1f"/>\n'
+          '  <rect x="9" y="9" width="252.96" height="298.56" rx="76.2" fill="#2a2a2a"/>\n'
+          '  <rect x="17" y="17" width="236.96" height="282.56" rx="68.2" fill="#000000"/>\n'
+          '</svg>',
+    ),
+  );
+
   /// A large desktop window: 1920×1080 at 2x.
   static const DevicePreset largeDesktopWindow = DevicePreset(
     id: 'desktop-large',
@@ -2160,7 +2259,7 @@ abstract final class DevicePresets {
     ),
   );
 
-  /// Wear OS Large Round (Generic).
+  /// Wear OS Large Round — emulator profile.
   static const DevicePreset wearOsLargeRound = DevicePreset(
     id: 'wear-os-large-round',
     name: 'Wear OS Large Round',
@@ -2183,7 +2282,8 @@ abstract final class DevicePresets {
     ),
   );
 
-  /// Wear OS Small Round (Generic).
+  /// Wear OS Small Round — the emulator profile Wear OS design guidance
+  /// starts from.
   static const DevicePreset wearOsSmallRound = DevicePreset(
     id: 'wear-os-small-round',
     name: 'Wear OS Small Round',
@@ -2206,7 +2306,7 @@ abstract final class DevicePresets {
     ),
   );
 
-  /// Wear OS XL Round (Generic).
+  /// Wear OS XL Round — emulator profile.
   static const DevicePreset wearOsXlRound = DevicePreset(
     id: 'wear-os-xl-round',
     name: 'Wear OS XL Round',
@@ -2257,6 +2357,10 @@ abstract final class DevicePresets {
     iPhone17e,
     iPhoneAir,
     iPhoneSe3,
+    appleWatchSe3Mm40,
+    appleWatchSeries12Mm42,
+    appleWatchSeries12Mm46,
+    appleWatchUltra4Mm49,
     largeDesktopWindow,
     smallDesktopWindow,
     pixel10,
