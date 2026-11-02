@@ -18,7 +18,7 @@ part of '../presets.dart';
 /// follow real UIKit behavior (notch/island mirrored to the
 /// sides, 21px home indicator).
 ///
-/// 33 devices.
+/// 36 devices.
 abstract final class DevicePresets {
   /// iPad (10th generation).
   static const DevicePreset iPad10 = DevicePreset(
@@ -2160,6 +2160,75 @@ abstract final class DevicePresets {
     ),
   );
 
+  /// Wear OS Large Round (Generic).
+  static const DevicePreset wearOsLargeRound = DevicePreset(
+    id: 'wear-os-large-round',
+    name: 'Wear OS Large Round',
+    brand: 'Generic',
+    platform: TargetPlatform.android,
+    portraitSize: ui.Size(227, 227),
+    devicePixelRatio: 2.0,
+    portraitPadding: EdgeInsets.zero,
+    kind: DeviceKind.watch,
+    frame: DeviceFrame(
+      size: ui.Size(249, 249),
+      screenOffset: ui.Offset(11, 11),
+      screenPath:
+          'M 113.5,0 A 113.5,113.5 0 1 1 113.5,227 A 113.5,113.5 0 1 1 113.5,0 Z',
+      body:
+          '<svg viewBox="0 0 249 249">\n'
+          '  <circle cx="124.5" cy="124.5" r="124.5" fill="#3f3f3f"/>\n'
+          '  <circle cx="124.5" cy="124.5" r="123.5" fill="#3e3e3e"/>\n'
+          '</svg>',
+    ),
+  );
+
+  /// Wear OS Small Round (Generic).
+  static const DevicePreset wearOsSmallRound = DevicePreset(
+    id: 'wear-os-small-round',
+    name: 'Wear OS Small Round',
+    brand: 'Generic',
+    platform: TargetPlatform.android,
+    portraitSize: ui.Size(192, 192),
+    devicePixelRatio: 2.0,
+    portraitPadding: EdgeInsets.zero,
+    kind: DeviceKind.watch,
+    frame: DeviceFrame(
+      size: ui.Size(212, 212),
+      screenOffset: ui.Offset(10, 10),
+      screenPath:
+          'M 96,0 A 96,96 0 1 1 96,192 A 96,96 0 1 1 96,0 Z',
+      body:
+          '<svg viewBox="0 0 212 212">\n'
+          '  <circle cx="106" cy="106" r="106" fill="#343434"/>\n'
+          '  <circle cx="106" cy="106" r="105" fill="#3e3e3e"/>\n'
+          '</svg>',
+    ),
+  );
+
+  /// Wear OS XL Round (Generic).
+  static const DevicePreset wearOsXlRound = DevicePreset(
+    id: 'wear-os-xl-round',
+    name: 'Wear OS XL Round',
+    brand: 'Generic',
+    platform: TargetPlatform.android,
+    portraitSize: ui.Size(240, 240),
+    devicePixelRatio: 2.0,
+    portraitPadding: EdgeInsets.zero,
+    kind: DeviceKind.watch,
+    frame: DeviceFrame(
+      size: ui.Size(264, 264),
+      screenOffset: ui.Offset(12, 12),
+      screenPath:
+          'M 120,0 A 120,120 0 1 1 120,240 A 120,120 0 1 1 120,0 Z',
+      body:
+          '<svg viewBox="0 0 264 264">\n'
+          '  <circle cx="132" cy="132" r="132" fill="#3e3e3e"/>\n'
+          '  <circle cx="132" cy="132" r="131" fill="#3f3f3f"/>\n'
+          '</svg>',
+    ),
+  );
+
   /// All built-in presets.
   ///
   /// Referencing this list (or [byId], which walks it)
@@ -2200,6 +2269,9 @@ abstract final class DevicePresets {
     galaxyZFlip8,
     galaxyZFold8,
     galaxyZFold8Ultra,
+    wearOsLargeRound,
+    wearOsSmallRound,
+    wearOsXlRound,
   ];
 
   /// Returns the built-in preset with the given [id], or null.

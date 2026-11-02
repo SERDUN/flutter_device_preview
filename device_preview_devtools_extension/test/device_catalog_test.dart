@@ -50,7 +50,9 @@ void main() {
   test('every physical device declares a plausible release year', () {
     for (final device in kDeviceSpecs) {
       final preset = PresetView(device);
-      if (preset.kind == 'desktop') continue;
+      // Generic sizes - the desktop windows, the Wear OS emulator's
+      // reference watches - are not products and have no release year.
+      if (preset.brand == 'Generic') continue;
       expect(
         preset.year,
         isNotNull,

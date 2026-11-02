@@ -28,6 +28,8 @@ from PIL import Image
 #   donor:      True when the skin belongs to another device that shares the
 #               panel — frame artwork only, keep hand-authored metrics
 #   skip:       reason this device cannot be derived yet
+#   round:      a round Wear OS skin: the body is a ring around a circular
+#               screen, and the probe reads no system bars and no landscape
 DEVICES = {
     "google-pixel-9": {"skin": "pixel_9", "avd_device": "pixel_9"},
     # Pixel 10 has its own skin but no AVD definition yet; it shares the
@@ -39,6 +41,13 @@ DEVICES = {
     "google-pixel-10-pro-fold": {"skin": "pixel_10_pro_fold/default",
                                  "avd_device": "pixel_9_pro_fold",
                                  "soft_probe": True},
+    # The Wear OS emulator profiles: generic round watches, not a product.
+    "wear-os-small-round": {"skin": "wearos_small_round",
+                            "avd_device": "wearos_small_round", "round": True},
+    "wear-os-large-round": {"skin": "wearos_large_round",
+                            "avd_device": "wearos_large_round", "round": True},
+    "wear-os-xl-round": {"skin": "wearos_xl_round",
+                         "avd_device": "wearos_xl_round", "round": True},
 }
 
 SKILL_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -193,6 +202,44 @@ def analyze_back(back_path, screen_pos, screen_px):
     return {"bounds": bounds, "radius": radius, "edge": edge, "face": face}
 
 
+def analyze_round_bezel(back_path, screen_pos, screen_px):
+    """The ring around a round watch screen. The Wear OS skins paint the
+    ring on an opaque square of flat background, so the silhouette is not
+    the alpha bounding box: walk out from the screen edge along the centre
+    row until the pixels match the background in the canvas corner. Two
+    colors as for a phone: the outer edge of the ring and its face."""
+    image = Image.open(back_path).convert("RGBA")
+    background = image.getpixel((1, 1))[:3]
+    sx, sy = screen_pos
+    sw, sh = screen_px
+    cx, cy = sx + sw / 2, sy + sh / 2
+    row = round(cy)
+
+    def is_background(x):
+        pixel = image.getpixel((x, row))
+        return pixel[3] < SOLID_ALPHA or \
+            max(abs(a - b) for a, b in zip(pixel[:3], background)) <= 4
+
+    x = sx - 1
+    while x > 0 and not is_background(x):
+        x -= 1
+    outer = cx - (x + 1)
+    inner = sw / 2
+    if outer <= inner:
+        sys.exit(f"error: no ring found around the screen in {back_path}")
+
+    def ring(radius):
+        return median_color([
+            image.getpixel((round(cx - radius), row)),
+            image.getpixel((round(cx + radius) - 1, row)),
+            image.getpixel((round(cx), round(cy - radius))),
+            image.getpixel((round(cx), round(cy + radius) - 1)),
+        ])
+
+    return {"center": (cx, cy), "radius": outer,
+            "edge": ring(outer - 1), "face": ring((outer + inner) / 2)}
+
+
 def analyze_mask(mask_path, screen_px):
     """Screen corner radius and camera punch hole from the mask overlay:
     opaque pixels are what covers the screen. Corner overlays touch the
@@ -265,6 +312,47 @@ def circle_ccw_path(cx, cy, r):
     return (f"M {fmt(cx)},{fmt(cy - r)} "
             f"A {fmt(r)},{fmt(r)} 0 1 0 {fmt(cx)},{fmt(cy + r)} "
             f"A {fmt(r)},{fmt(r)} 0 1 0 {fmt(cx)},{fmt(cy - r)} Z")
+
+
+def circle_cw_path(cx, cy, r):
+    return (f"M {fmt(cx)},{fmt(cy - r)} "
+            f"A {fmt(r)},{fmt(r)} 0 1 1 {fmt(cx)},{fmt(cy + r)} "
+            f"A {fmt(r)},{fmt(r)} 0 1 1 {fmt(cx)},{fmt(cy - r)} Z")
+
+
+def build_round_frame(skin_dir, dpr):
+    """A round watch: a circular screen inside a ring-shaped body."""
+    geometry = skin_geometry(skin_dir)
+    sw, sh = geometry["screen_px"]
+    if sw != sh:
+        sys.exit(f"error: {skin_dir} is marked round but its screen is "
+                 f"{sw}x{sh}")
+    bezel = analyze_round_bezel(geometry["back"], geometry["screen_pos"],
+                                geometry["screen_px"])
+    sx, sy = geometry["screen_pos"]
+    cx, cy = bezel["center"]
+    radius = bezel["radius"]
+
+    def dp(v):
+        return v / dpr
+
+    body = dp(2 * radius)
+    offset = (dp(sx - (cx - radius)), dp(sy - (cy - radius)))
+    centre = body / 2
+    body_svg = [
+        f'<svg viewBox="0 0 {fmt(body)} {fmt(body)}">',
+        f'  <circle cx="{fmt(centre)}" cy="{fmt(centre)}" r="{fmt(centre)}"'
+        f' fill="{hex_color(bezel["edge"])}"/>',
+        f'  <circle cx="{fmt(centre)}" cy="{fmt(centre)}"'
+        f' r="{fmt(max(0.0, centre - 1))}" fill="{hex_color(bezel["face"])}"/>',
+        "</svg>",
+    ]
+    return {
+        "size": {"width": fmt_json(body), "height": fmt_json(body)},
+        "screenOffset": {"x": fmt_json(offset[0]), "y": fmt_json(offset[1])},
+        "screenPath": circle_cw_path(dp(sw) / 2, dp(sh) / 2, dp(sw) / 2),
+        "body": body_svg,
+    }, (dp(sw), dp(sh))
 
 
 def build_frame(skin_dir, dpr):
@@ -400,17 +488,64 @@ class EmulatorProbe:
                 insets["right"] = max(insets["right"], round((r - l) / dpr))
         return insets, dw > dh
 
-    def probe(self, avd_device):
+    def probe(self, avd_device, watch=False):
         if avd_device in self.cache:
             return self.cache[avd_device]
-        metrics = self._probe(avd_device)
+        metrics = self._probe(avd_device, watch)
         self.cache[avd_device] = metrics
         return metrics
 
-    def _probe(self, avd_device):
+    def system_image_for(self, watch):
+        """A phone profile boots the newest phone image; a Wear OS profile
+        only boots a Wear OS image (`android-wear*` tags)."""
+        if not watch:
+            return self.system_image()
+        images = []
+        for path in glob.glob(os.path.join(self.sdk, "system-images",
+                                           "android-*", "android-wear*",
+                                           "*")):
+            parts = path.split(os.sep)
+            api = parts[-3].split("android-")[1]
+            images.append((api, f"system-images;android-{api};"
+                                f"{parts[-2]};{parts[-1]}"))
+        if not images:
+            sys.exit("error: no Wear OS system image installed (sdkmanager "
+                     "\"system-images;android-36;android-wear-signed;"
+                     "arm64-v8a\")")
+        return max(images)[1]
+
+    def watch_insets(self, dpr):
+        """What a Wear OS app is inset by. Wear OS draws no status or
+        navigation bar over an app, so the expected answer is zero on every
+        side; a bar that does show up in `dumpsys window displays` is still
+        measured rather than ignored."""
+        dump = subprocess.run(
+            [self.adb, "shell", "dumpsys", "window", "displays"],
+            capture_output=True, text=True, timeout=60).stdout
+        display = re.search(
+            r"mDisplayFrame=Rect\((\d+), (\d+) - (\d+), (\d+)", dump)
+        insets = {"left": 0, "top": 0, "right": 0, "bottom": 0}
+        if not display:
+            return insets
+        dh = int(display.group(4)) - int(display.group(2))
+        pattern = (r"InsetsSource.*?type=(?:ITYPE_)?(STATUS_BAR|statusBars|"
+                   r"NAVIGATION_BAR|navigationBars)\b.*?"
+                   r"frame=\[(\d+),(\d+)\]\[(\d+),(\d+)\]")
+        for _, l, t, r, b in re.findall(pattern, dump):
+            l, t, r, b = int(l), int(t), int(r), int(b)
+            if r <= l or b <= t:
+                continue
+            if t == 0 and b < dh:
+                insets["top"] = max(insets["top"], round((b - t) / dpr))
+            elif b == dh and t > 0:
+                insets["bottom"] = max(insets["bottom"], round((b - t) / dpr))
+        return insets
+
+    def _probe(self, avd_device, watch=False):
         create = subprocess.run(
             [self.avdmanager, "create", "avd", "-n", "specprobe-tmp",
-             "-k", self.system_image(), "-d", avd_device, "--force"],
+             "-k", self.system_image_for(watch), "-d", avd_device,
+             "--force"],
             input="no\n", capture_output=True, text=True)
         if create.returncode != 0:
             sys.exit(f"error: avdmanager create failed for {avd_device!r}:\n"
@@ -438,6 +573,15 @@ class EmulatorProbe:
             if not size or not density:
                 sys.exit("error: wm size/density unreadable")
             dpr = int(density.group(1)) / 160
+            if watch:
+                # A watch neither rotates nor has bars to wait for.
+                return {
+                    "width": int(size.group(1)) / dpr,
+                    "height": int(size.group(2)) / dpr,
+                    "dpr": dpr,
+                    "portrait": self.watch_insets(dpr),
+                    "landscape": None,
+                }
             portrait, landscape_now = self.bar_insets(dpr)
             if landscape_now:
                 sys.exit("error: display started in landscape unexpectedly")
@@ -482,6 +626,8 @@ def merge_metrics(spec, metrics):
     assign("devicePixelRatio", float(metrics["dpr"]))
     for key, values in (("portraitPadding", metrics["portrait"]),
                         ("landscapePadding", metrics["landscape"])):
+        if values is None:
+            continue
         assign(key, {side: fmt_json(values[side])
                      for side in ("left", "top", "right", "bottom")})
     for change in changes:
@@ -508,7 +654,8 @@ def update_spec(spec_id, mapping, roots, probe, dry_run):
           f"{', probed' if probe and not donor else ''})")
 
     if probe is not None and not donor:
-        metrics = probe.probe(mapping["avd_device"])
+        metrics = probe.probe(mapping["avd_device"],
+                              watch=mapping.get("round", False))
         size = spec["portraitSize"]
         mismatched = abs(metrics["width"] - size["width"]) > 1 or \
             abs(metrics["height"] - size["height"]) > 1
@@ -524,7 +671,8 @@ def update_spec(spec_id, mapping, roots, probe, dry_run):
             merge_metrics(spec, metrics)
 
     dpr = spec["devicePixelRatio"]
-    frame, screen_dp = build_frame(skin_dir, dpr)
+    frame, screen_dp = (build_round_frame if mapping.get("round")
+                        else build_frame)(skin_dir, dpr)
     size = spec["portraitSize"]
     # Specs may carry Android's rounded dp (412) where px/dpr is fractional
     # (411.43) — tolerate sub-dp drift, refuse anything larger.

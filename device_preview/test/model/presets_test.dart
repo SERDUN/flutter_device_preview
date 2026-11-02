@@ -7,15 +7,17 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('DevicePresets catalog', () {
-    test('contains the 33 documented presets with unique ids', () {
-      expect(DevicePresets.all, hasLength(33));
+    test('contains the 36 documented presets with unique ids', () {
+      expect(DevicePresets.all, hasLength(36));
       final ids = DevicePresets.all.map((p) => p.id).toSet();
-      expect(ids, hasLength(33));
+      expect(ids, hasLength(36));
     });
 
     test('every device preset declares a release year', () {
       for (final preset in DevicePresets.all) {
-        if (preset.kind == DeviceKind.desktop) continue;
+        // Generic sizes - the desktop windows, the Wear OS emulator's
+        // reference watches - are not products and have no release year.
+        if (preset.brand == 'Generic') continue;
         expect(preset.year, isNotNull, reason: preset.id);
         expect(preset.year, inInclusiveRange(2000, 2100), reason: preset.id);
       }
@@ -61,6 +63,42 @@ void main() {
             .where((p) => p.kind != DeviceKind.foldable)
             .expand((p) => p.displayFeatures),
         isEmpty,
+      );
+    });
+
+    test('every watch preset is a round screen inside a round body', () {
+      final watches = DevicePresets.all
+          .where((p) => p.kind == DeviceKind.watch)
+          .toList();
+      expect(watches.map((p) => p.id), <String>[
+        'wear-os-large-round',
+        'wear-os-small-round',
+        'wear-os-xl-round',
+      ]);
+      for (final preset in watches) {
+        final size = preset.portraitSize;
+        expect(preset.platform, TargetPlatform.android, reason: preset.id);
+        expect(size.width, size.height, reason: preset.id);
+        // Wear OS draws no bars over an app and has no docked keyboard.
+        expect(preset.portraitPadding, EdgeInsets.zero, reason: preset.id);
+        expect(preset.systemUi, isNull, reason: preset.id);
+        expect(preset.portraitKeyboardHeight, isNull, reason: preset.id);
+        // The screen is clipped to a circle: two half-turn arcs whose radius
+        // is half the screen width.
+        final frame = preset.frame!;
+        final radius = size.width / 2;
+        expect(
+          frame.screenPath,
+          startsWith('M ${_n(radius)},0 A ${_n(radius)},${_n(radius)} '),
+          reason: preset.id,
+        );
+        expect(frame.size.width, frame.size.height, reason: preset.id);
+        expect(frame.size.width, greaterThan(size.width), reason: preset.id);
+      }
+      // The smallest is the size Wear OS design guidance starts from.
+      expect(
+        DevicePresets.byId('wear-os-small-round')!.portraitSize,
+        const Size(192, 192),
       );
     });
 
@@ -442,3 +480,7 @@ void main() {
     });
   });
 }
+
+/// A length as the spec generator prints it: no trailing `.0`.
+String _n(double value) =>
+    value == value.roundToDouble() ? '${value.toInt()}' : '$value';

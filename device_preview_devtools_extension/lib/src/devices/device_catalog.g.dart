@@ -7,7 +7,7 @@
 /// exactly what the panel pushes to the inspected app, frame
 /// artwork included.
 ///
-/// 33 devices.
+/// 36 devices.
 const List<Map<String, Object?>> kDeviceSpecs =
     <Map<String, Object?>>[
       <String, Object?>{
@@ -1650,6 +1650,96 @@ const List<Map<String, Object?>> kDeviceSpecs =
             'center': '<svg viewBox="0 0 96 4">\n  <path d="M 2,0 H 94 A 2,2 0 0 1 96,2 V 2 A 2,2 0 0 1 94,4 H 2 A 2,2 0 0 1 0,2 V 2 A 2,2 0 0 1 2,0 Z" fill="currentColor"/>\n</svg>',
             'bottomInset': 9,
           },
+        },
+      },
+      <String, Object?>{
+        'id': 'wear-os-large-round',
+        'name': 'Wear OS Large Round',
+        'brand': 'Generic',
+        'platform': 'android',
+        'kind': 'watch',
+        'portraitSize': <String, Object?>{
+          'width': 227,
+          'height': 227,
+        },
+        'devicePixelRatio': 2.0,
+        'portraitPadding': <String, Object?>{
+          'left': 0,
+          'top': 0,
+          'right': 0,
+          'bottom': 0,
+        },
+        'frame': <String, Object?>{
+          'size': <String, Object?>{
+            'width': 249,
+            'height': 249,
+          },
+          'screenOffset': <String, Object?>{
+            'x': 11,
+            'y': 11,
+          },
+          'screenPath': 'M 113.5,0 A 113.5,113.5 0 1 1 113.5,227 A 113.5,113.5 0 1 1 113.5,0 Z',
+          'body': '<svg viewBox="0 0 249 249">\n  <circle cx="124.5" cy="124.5" r="124.5" fill="#3f3f3f"/>\n  <circle cx="124.5" cy="124.5" r="123.5" fill="#3e3e3e"/>\n</svg>',
+        },
+      },
+      <String, Object?>{
+        'id': 'wear-os-small-round',
+        'name': 'Wear OS Small Round',
+        'brand': 'Generic',
+        'platform': 'android',
+        'kind': 'watch',
+        'portraitSize': <String, Object?>{
+          'width': 192,
+          'height': 192,
+        },
+        'devicePixelRatio': 2.0,
+        'portraitPadding': <String, Object?>{
+          'left': 0,
+          'top': 0,
+          'right': 0,
+          'bottom': 0,
+        },
+        'frame': <String, Object?>{
+          'size': <String, Object?>{
+            'width': 212,
+            'height': 212,
+          },
+          'screenOffset': <String, Object?>{
+            'x': 10,
+            'y': 10,
+          },
+          'screenPath': 'M 96,0 A 96,96 0 1 1 96,192 A 96,96 0 1 1 96,0 Z',
+          'body': '<svg viewBox="0 0 212 212">\n  <circle cx="106" cy="106" r="106" fill="#343434"/>\n  <circle cx="106" cy="106" r="105" fill="#3e3e3e"/>\n</svg>',
+        },
+      },
+      <String, Object?>{
+        'id': 'wear-os-xl-round',
+        'name': 'Wear OS XL Round',
+        'brand': 'Generic',
+        'platform': 'android',
+        'kind': 'watch',
+        'portraitSize': <String, Object?>{
+          'width': 240,
+          'height': 240,
+        },
+        'devicePixelRatio': 2.0,
+        'portraitPadding': <String, Object?>{
+          'left': 0,
+          'top': 0,
+          'right': 0,
+          'bottom': 0,
+        },
+        'frame': <String, Object?>{
+          'size': <String, Object?>{
+            'width': 264,
+            'height': 264,
+          },
+          'screenOffset': <String, Object?>{
+            'x': 12,
+            'y': 12,
+          },
+          'screenPath': 'M 120,0 A 120,120 0 1 1 120,240 A 120,120 0 1 1 120,0 Z',
+          'body': '<svg viewBox="0 0 264 264">\n  <circle cx="132" cy="132" r="132" fill="#3e3e3e"/>\n  <circle cx="132" cy="132" r="131" fill="#3f3f3f"/>\n</svg>',
         },
       },
     ];
