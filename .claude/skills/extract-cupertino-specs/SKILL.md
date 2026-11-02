@@ -215,7 +215,8 @@ mapping, and differ from a phone in four places:
   plus both side borders; the offset is the art's top-left from the
   `anchor` edge. Opaque fills become pill-shaped rects (translucent
   highlights dropped), `onTop: false` art goes under the case, and the
-  frame grows to the right to hold the crown.
+  frame grows on whichever side a button sticks out (the crown: right),
+  shifting the case and the screen offset when that side is left or top.
 - **Mask**: the SE masks draw the outline inside a form XObject (`/Fm1 Do`)
   at 2x; `mask_subpaths` reads matrix-less XObject streams with the page's.
 

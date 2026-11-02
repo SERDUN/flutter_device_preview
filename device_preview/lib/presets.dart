@@ -286,7 +286,8 @@ class DevicePreset {
                   navigationBar: systemUi!.navigationBar,
                   platform: platform,
                 ));
-    if (orientation == Orientation.portrait) {
+    // A watch has no landscape: its screen is fixed to the wrist.
+    if (orientation == Orientation.portrait || kind == DeviceKind.watch) {
       return DeviceSimulation(
         presetId: id,
         deviceKind: kind,

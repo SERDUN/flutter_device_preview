@@ -335,7 +335,10 @@ class _DeviceSection extends StatelessWidget {
               ],
               selected: {orientation},
               showSelectedIcon: false,
-              onSelectionChanged: controller.hasSimulatedScreen
+              // A watch has no landscape.
+              onSelectionChanged:
+                  controller.hasSimulatedScreen &&
+                      controller.activePreset?.kind != 'watch'
                   ? (selection) => controller.setOrientation(selection.first)
                   : null,
             ),

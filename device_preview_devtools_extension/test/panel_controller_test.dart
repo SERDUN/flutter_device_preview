@@ -583,6 +583,17 @@ void main() {
       expect(gateway.simulation?['viewPadding'], landscape);
     });
 
+    test('a watch stays in portrait', () async {
+      gateway = FakeGateway(connected: true, available: true);
+      gateway.presetsJson = [testWatchPresetJson];
+      createController();
+      await pumpEventQueue();
+
+      await controller!.selectPreset(const PresetView(testWatchPresetJson));
+      await controller!.setOrientation('landscape');
+      expect(gateway.simulation?['orientation'] ?? 'portrait', 'portrait');
+    });
+
     test('selectPreset pushes the frame artwork', () async {
       await ready();
       await controller!.selectPreset(const PresetView(testFramedPresetJson));

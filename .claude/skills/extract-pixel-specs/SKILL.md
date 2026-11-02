@@ -170,7 +170,10 @@ desktop windows, and `kind: watch`.
 - **Probe**: a Wear OS profile only boots a Wear OS image
   (`system-images;android-36;android-wear-signed;arm64-v8a` from
   `sdkmanager`); the script picks the newest `android-wear*` image for a
-  round entry. `wm size` / `wm density` give the metrics as for a phone.
+  round entry, and a phone profile never boots an `android-wear*`, TV or
+  automotive image. Either way only images of the host's ABI are taken and
+  API levels compare as numbers (`37.1` > `37.0` > `36`). `wm size` /
+  `wm density` give the metrics as for a phone.
   Wear OS draws no status or navigation bar over an app, so the bar wait is
   skipped and any bar `dumpsys window displays` does list is measured
   (none, on Wear OS 6); a watch does not rotate, so no landscape is probed
