@@ -15,4 +15,7 @@ enum DeviceKind {
 
   /// A desktop window.
   desktop,
+
+  /// A smartwatch: a small, usually round screen with no system bars.
+  watch,
 }

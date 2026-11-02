@@ -42,7 +42,7 @@ await DevicePreview.controller.applyPreset(preset);
 | `brand` | string | Manufacturer, e.g. `Apple`. Groups and sorts the picker. |
 | `year` | integer | Release year, e.g. `2025`. Shown in the picker, which sorts each brand newest first, and matched by its search field. |
 | `platform` | string, **required** | `TargetPlatform` name: `android`, `fuchsia`, `iOS`, `linux`, `macOS`, `windows`. |
-| `kind` | string | `phone` (default), `tablet`, `foldable`, `desktop`. |
+| `kind` | string | `phone` (default), `tablet`, `foldable`, `desktop`, `watch`. |
 | `portraitSize` | `{width, height}`, **required** | Logical resolution, portrait. |
 | `devicePixelRatio` | number, **required** | Pixel density. The physical resolution is `portraitSize × devicePixelRatio`. |
 | `portraitPadding` | `{left, top, right, bottom}` | Safe area (`MediaQuery.padding`), portrait. |

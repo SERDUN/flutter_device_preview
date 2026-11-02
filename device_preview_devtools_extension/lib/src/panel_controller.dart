@@ -119,7 +119,7 @@ class PresetView {
   /// Target platform name (e.g. `iOS`, `android`).
   String get platform => json['platform'] as String? ?? 'unknown';
 
-  /// Device kind (`phone`, `tablet`, `foldable`, `desktop`).
+  /// Device kind (`phone`, `tablet`, `foldable`, `desktop`, `watch`).
   String get kind => json['kind'] as String? ?? 'phone';
 
   /// Logical portrait size as a `{width, height}` map.
