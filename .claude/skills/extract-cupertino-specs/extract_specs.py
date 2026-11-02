@@ -32,6 +32,7 @@ model. Requires pymupdf (`pip install pymupdf`). Usage:
 import argparse
 import glob
 import json
+import math
 import os
 import plistlib
 import re
@@ -548,9 +549,11 @@ def home_button(resources, chrome, body, face_color):
             ("circle", (cx, cy, r - stroke["width"]), face_color, 1.0)]
 
 
-def body_svg(size, shapes, radius):
-    w, h = size
-    lines = [f'<svg viewBox="0 0 {fmt(w)} {fmt(h)}">']
+def body_svg(size, shapes, radius, case=None):
+    """`case` is the size the rings are drawn at when the frame is larger
+    than the case (a watch crown sticking out); it defaults to `size`."""
+    lines = [f'<svg viewBox="0 0 {fmt(size[0])} {fmt(size[1])}">']
+    w, h = case or size
     for shape in shapes:
         kind, color, opacity = shape[0], shape[-2], shape[-1]
         tag = "rect"
@@ -563,6 +566,10 @@ def body_svg(size, shapes, radius):
             attrs = (f'x="{fmt(ix)}" y="{fmt(iy)}" '
                      f'width="{fmt(w - 2 * ix)}" '
                      f'height="{fmt(h - 2 * iy)}" rx="{fmt(r)}"')
+        elif kind == "button":
+            x, y, bw, bh = shape[1]
+            attrs = (f'x="{fmt(x)}" y="{fmt(y)}" width="{fmt(bw)}" '
+                     f'height="{fmt(bh)}" rx="{fmt(min(bw, bh) / 2)}"')
         elif kind == "circle":
             tag = "circle"
             cx, cy, r = shape[1]
@@ -643,7 +650,52 @@ def watch_rings(resources, chrome, logical):
             continue
         shapes.append(("ring", (round(x - ox, 2), round(y - oy, 2)),
                        color, 1.0))
-    return shapes, (round(screen[0] - ox, 2), round(screen[1] - oy, 2))
+    return shapes, (round(screen[0] - ox, 2), round(screen[1] - oy, 2)), \
+        (ox, oy)
+
+
+def watch_buttons(resources, chrome, logical, origin):
+    """The Digital Crown, the side button and the Ultra's Action button.
+
+    Each `inputs` entry is a small PDF placed on the chrome window, whose
+    origin is the corner tile's: `anchor` names the window edge the offset
+    is measured from (the right edge sits at logical width + both side
+    borders) and the offset is the art's top-left corner. Its opaque gray
+    or colored fills, clipped to the art's page, become rounded rects in
+    body coordinates (the window shifted by the body's `origin` in the
+    tile); translucent highlights are left out like the rest of the
+    gradients. `onTop: false` art is drawn under the case, so only what
+    sticks out shows. Returns (under, over) shape lists.
+    """
+    sizing = chrome["images"]["sizing"]
+    window_w = logical[0] + sizing["leftWidth"] + sizing["rightWidth"]
+    under, over = [], []
+    for button in chrome.get("inputs", []):
+        art = os.path.join(resources, button["image"] + ".pdf")
+        if not os.path.exists(art):
+            continue
+        page = pymupdf.open(art)[0]
+        offset = button["offsets"]["normal"]
+        if button.get("anchor") == "right":
+            x0 = window_w + offset["x"]
+        elif button.get("anchor") == "left":
+            x0 = offset["x"]
+        else:
+            continue
+        x0 -= origin[0]
+        y0 = offset["y"] - origin[1]
+        shapes = []
+        for d in page.get_drawings():
+            if d["type"] != "f" or (d.get("fill_opacity") or 1.0) < 1.0:
+                continue
+            rect = d["rect"] & page.rect
+            if rect.is_empty or rect.width < 0.5 or rect.height < 0.5:
+                continue
+            shapes.append(("button", (x0 + rect.x0, y0 + rect.y0,
+                                      rect.width, rect.height),
+                           d["fill"], 1.0))
+        (over if button.get("onTop") else under).extend(shapes)
+    return under, over
 
 
 def update_watch_spec(dev, spec_id, mapping, dry_run):
@@ -681,15 +733,22 @@ def update_watch_spec(dev, spec_id, mapping, dry_run):
     resources = chrome_resources(dev, profile["chromeIdentifier"])
     chrome = load_chrome_json(resources)
     radius = chrome["paths"]["simpleOutsideBorder"]["cornerRadiusX"]
-    shapes, border = watch_rings(resources, chrome, logical)
+    shapes, border, origin = watch_rings(resources, chrome, logical)
     body = (logical[0] + 2 * border[0], logical[1] + 2 * border[1])
+    under, over = watch_buttons(resources, chrome, logical, origin)
+    shapes = under + shapes + over
+    # The crown sticks out past the case: the frame grows to hold it (the
+    # screen keeps its offset, the case its size).
+    right = max([body[0]] + [x + w for _, (x, _, w, _), _, _ in under + over])
+    body_size = (math.ceil(right * 100) / 100, body[1])
     mask = os.path.join(resources_dir, profile["framebufferMask"] + ".pdf")
     spec["frame"] = {
-        "size": {"width": fmt_json(body[0]), "height": fmt_json(body[1])},
+        "size": {"width": fmt_json(body_size[0]),
+                 "height": fmt_json(body_size[1])},
         "screenOffset": {"x": fmt_json(border[0]),
                          "y": fmt_json(border[1])},
         "screenPath": screen_path(mask, scale, logical, None),
-        "body": body_svg(body, shapes, radius),
+        "body": body_svg(body_size, shapes, radius, case=body),
     }
     print(f"  frame: body {fmt(body[0])}x{fmt(body[1])} "
           f"border {fmt(border[0])},{fmt(border[1])}"
