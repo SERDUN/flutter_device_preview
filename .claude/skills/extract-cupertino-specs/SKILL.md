@@ -207,8 +207,15 @@ mapping, and differ from a phone in four places:
   are thicker than the top, so a ring inset is an `(x, y)` pair), or fills
   only (SE: the innermost fill re-centered on the screen gives the screen
   origin). The outermost opaque gray fill is the body; what is painted
-  before it is covered by it. Colored shapes are guides, not bezel. The
-  Digital Crown and side buttons are left out, as phones leave theirs.
+  before it is covered by it. Colored shapes are guides, not bezel.
+- **Buttons**: unlike the phones, a watch keeps its Digital Crown, side
+  button and (Ultra) Action button - they are what makes it read as a watch.
+  `watch_buttons` places each `inputs` art on the chrome window, whose
+  origin is the corner tile's and whose right edge is the logical width
+  plus both side borders; the offset is the art's top-left from the
+  `anchor` edge. Opaque fills become pill-shaped rects (translucent
+  highlights dropped), `onTop: false` art goes under the case, and the
+  frame grows to the right to hold the crown.
 - **Mask**: the SE masks draw the outline inside a form XObject (`/Fm1 Do`)
   at 2x; `mask_subpaths` reads matrix-less XObject streams with the page's.
 
