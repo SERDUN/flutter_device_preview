@@ -7,10 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('DevicePresets catalog', () {
-    test('contains the 36 documented presets with unique ids', () {
-      expect(DevicePresets.all, hasLength(36));
+    test('contains the 40 documented presets with unique ids', () {
+      expect(DevicePresets.all, hasLength(40));
       final ids = DevicePresets.all.map((p) => p.id).toSet();
-      expect(ids, hasLength(36));
+      expect(ids, hasLength(40));
     });
 
     test('every device preset declares a release year', () {
@@ -66,9 +66,13 @@ void main() {
       );
     });
 
-    test('every watch preset is a round screen inside a round body', () {
+    test('every Wear OS preset is a round screen inside a round body', () {
       final watches = DevicePresets.all
-          .where((p) => p.kind == DeviceKind.watch)
+          .where(
+            (p) =>
+                p.kind == DeviceKind.watch &&
+                p.platform == TargetPlatform.android,
+          )
           .toList();
       expect(watches.map((p) => p.id), <String>[
         'wear-os-large-round',
@@ -99,6 +103,39 @@ void main() {
       expect(
         DevicePresets.byId('wear-os-small-round')!.portraitSize,
         const Size(192, 192),
+      );
+    });
+
+    test('every Apple Watch preset is a rounded screen with no bars', () {
+      final watches = DevicePresets.all
+          .where(
+            (p) =>
+                p.kind == DeviceKind.watch && p.platform == TargetPlatform.iOS,
+          )
+          .toList();
+      expect(watches.map((p) => p.id), <String>[
+        'apple-watch-se-3-40mm',
+        'apple-watch-series-12-42mm',
+        'apple-watch-series-12-46mm',
+        'apple-watch-ultra-4-49mm',
+      ]);
+      for (final preset in watches) {
+        final size = preset.portraitSize;
+        expect(preset.devicePixelRatio, 2, reason: preset.id);
+        expect(size.height, greaterThan(size.width), reason: preset.id);
+        expect(preset.portraitPadding, EdgeInsets.zero, reason: preset.id);
+        expect(preset.systemUi, isNull, reason: preset.id);
+        expect(preset.portraitKeyboardHeight, isNull, reason: preset.id);
+        final frame = preset.frame!;
+        expect(frame.screenPath, startsWith('M '), reason: preset.id);
+        expect(frame.size.width, greaterThan(size.width), reason: preset.id);
+        expect(frame.size.height, greaterThan(size.height), reason: preset.id);
+      }
+      // The smallest Apple Watch screen is narrower than the smallest Wear OS
+      // one.
+      expect(
+        DevicePresets.byId('apple-watch-se-3-40mm')!.portraitSize,
+        const Size(162, 197),
       );
     });
 
