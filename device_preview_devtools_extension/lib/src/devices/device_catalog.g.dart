@@ -7,7 +7,7 @@
 /// exactly what the panel pushes to the inspected app, frame
 /// artwork included.
 ///
-/// 40 devices.
+/// 42 devices.
 const List<Map<String, Object?>> kDeviceSpecs =
     <Map<String, Object?>>[
       <String, Object?>{
@@ -1388,6 +1388,68 @@ const List<Map<String, Object?>> kDeviceSpecs =
             'center': '<svg viewBox="0 0 108 4">\n  <path d="M 2,0 H 106 A 2,2 0 0 1 108,2 V 2 A 2,2 0 0 1 106,4 H 2 A 2,2 0 0 1 0,2 V 2 A 2,2 0 0 1 2,0 Z" fill="currentColor"/>\n</svg>',
             'bottomInset': 9,
           },
+        },
+      },
+      <String, Object?>{
+        'id': 'lokmat-appllp-5-max',
+        'name': 'APPLLP 5 MAX',
+        'brand': 'Lokmat',
+        'year': 2024,
+        'platform': 'android',
+        'kind': 'watch',
+        'portraitSize': <String, Object?>{
+          'width': 320,
+          'height': 240,
+        },
+        'devicePixelRatio': 2.0,
+        'portraitPadding': <String, Object?>{
+          'left': 0,
+          'top': 0,
+          'right': 0,
+          'bottom': 0,
+        },
+        'frame': <String, Object?>{
+          'size': <String, Object?>{
+            'width': 352,
+            'height': 264,
+          },
+          'screenOffset': <String, Object?>{
+            'x': 12,
+            'y': 12,
+          },
+          'screenPath': 'M 16,0 H 304 A 16,16 0 0 1 320,16 V 224 A 16,16 0 0 1 304,240 H 16 A 16,16 0 0 1 0,224 V 16 A 16,16 0 0 1 16,0 Z',
+          'body': '<svg viewBox="0 0 352 264">\n  <rect x="0" y="0" width="344" height="264" rx="26" fill="#1f1f1f"/>\n  <rect x="5" y="5" width="334" height="254" rx="22" fill="#000000"/>\n  <rect x="342" y="56" width="10" height="56" rx="5" fill="#2a2a2a"/>\n  <rect x="342" y="150" width="10" height="56" rx="5" fill="#2a2a2a"/>\n</svg>',
+        },
+      },
+      <String, Object?>{
+        'id': 'lokmat-appllp-7-max',
+        'name': 'APPLLP 7 MAX',
+        'brand': 'Lokmat',
+        'year': 2025,
+        'platform': 'android',
+        'kind': 'watch',
+        'portraitSize': <String, Object?>{
+          'width': 205,
+          'height': 251,
+        },
+        'devicePixelRatio': 2.0,
+        'portraitPadding': <String, Object?>{
+          'left': 0,
+          'top': 0,
+          'right': 0,
+          'bottom': 0,
+        },
+        'frame': <String, Object?>{
+          'size': <String, Object?>{
+            'width': 265,
+            'height': 299,
+          },
+          'screenOffset': <String, Object?>{
+            'x': 30,
+            'y': 24,
+          },
+          'screenPath': 'M 36,0 H 169 A 36,36 0 0 1 205,36 V 215 A 36,36 0 0 1 169,251 H 36 A 36,36 0 0 1 0,215 V 36 A 36,36 0 0 1 36,0 Z',
+          'body': '<svg viewBox="0 0 265 299">\n  <rect x="6" y="0" width="249" height="299" rx="58" fill="#1f1f1f"/>\n  <rect x="16" y="10" width="229" height="279" rx="48" fill="#000000"/>\n  <rect x="0" y="86" width="8" height="58" rx="4" fill="#2a2a2a"/>\n  <rect x="253" y="70" width="12" height="44" rx="6" fill="#2a2a2a"/>\n  <rect x="253" y="170" width="8" height="52" rx="4" fill="#2a2a2a"/>\n</svg>',
         },
       },
       <String, Object?>{

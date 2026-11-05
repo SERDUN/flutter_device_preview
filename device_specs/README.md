@@ -89,6 +89,10 @@ the Google Pixel specs from the official emulator device skins and a live
 emulator probe (it needs a recent Android Studio for current-generation
 skins).
 
+A watch has one orientation, the way it is worn, so `portraitSize` and the
+frame describe that one, even when it is wider than tall
+(`lokmat-appllp-5-max`).
+
 Landscape is not described separately: the whole frame is rotated a quarter
 turn at paint time, like turning the real device around. The app is laid out
 inside the screen and the letterbox is computed from the **body** bounds, so

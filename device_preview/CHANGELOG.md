@@ -13,6 +13,10 @@
     (208x248), Ultra 4 49 mm (211x257), from the Xcode watchOS simulator's
     device types and DeviceKit chrome - the rounded display mask and the
     case rings.
+  - Lokmat: APPLLP 7 MAX (205x251) and APPLLP 5 MAX (320x240, worn wider than
+    tall), full Android watch phones. The panel resolutions are the sellers';
+    2.0 is the density their pixel pitch points to, no seller publishes it, and
+    the frames are drawn from product photos.
 
 ## 3.0.0
 

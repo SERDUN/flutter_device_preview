@@ -7,10 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('DevicePresets catalog', () {
-    test('contains the 40 documented presets with unique ids', () {
-      expect(DevicePresets.all, hasLength(40));
+    test('contains the 42 documented presets with unique ids', () {
+      expect(DevicePresets.all, hasLength(42));
       final ids = DevicePresets.all.map((p) => p.id).toSet();
-      expect(ids, hasLength(40));
+      expect(ids, hasLength(42));
     });
 
     test('every device preset declares a release year', () {
@@ -71,7 +71,8 @@ void main() {
           .where(
             (p) =>
                 p.kind == DeviceKind.watch &&
-                p.platform == TargetPlatform.android,
+                p.platform == TargetPlatform.android &&
+                p.brand == 'Generic',
           )
           .toList();
       expect(watches.map((p) => p.id), <String>[
@@ -141,6 +142,43 @@ void main() {
       );
     });
 
+    test('every Lokmat preset keeps the panel resolution sellers list', () {
+      final watches = DevicePresets.all
+          .where((p) => p.brand == 'Lokmat')
+          .toList();
+      expect(watches.map((p) => p.id), <String>[
+        'lokmat-appllp-5-max',
+        'lokmat-appllp-7-max',
+      ]);
+      for (final preset in watches) {
+        expect(preset.kind, DeviceKind.watch, reason: preset.id);
+        expect(preset.platform, TargetPlatform.android, reason: preset.id);
+        expect(preset.portraitPadding, EdgeInsets.zero, reason: preset.id);
+        final frame = preset.frame!;
+        expect(frame.screenPath, startsWith('M '), reason: preset.id);
+        expect(frame.size.width, greaterThan(preset.portraitSize.width));
+        expect(frame.size.height, greaterThan(preset.portraitSize.height));
+      }
+      Size physical(DevicePreset preset) =>
+          preset.portraitSize * preset.devicePixelRatio;
+      expect(
+        physical(DevicePresets.byId('lokmat-appllp-7-max')!),
+        const Size(410, 502),
+      );
+      expect(
+        physical(DevicePresets.byId('lokmat-appllp-5-max')!),
+        const Size(640, 480),
+      );
+    });
+
+    test('the APPLLP 5 MAX stays wider than tall on the wrist', () {
+      final preset = DevicePresets.byId('lokmat-appllp-5-max')!;
+      for (final orientation in Orientation.values) {
+        final screen = preset.resolve(orientation: orientation).screenSize;
+        expect(screen, const Size(320, 240), reason: orientation.name);
+      }
+    });
+
     test('a watch resolves to portrait whatever the orientation', () {
       for (final preset in DevicePresets.all.where(
         (p) => p.kind == DeviceKind.watch,
@@ -164,10 +202,7 @@ void main() {
     test('key metrics match the researched catalog', () {
       expect(DevicePresets.iPhone16.portraitSize, const ui.Size(393, 852));
       expect(DevicePresets.iPhone16.devicePixelRatio, 3.0);
-      expect(
-        DevicePresets.iPhone16Plus.portraitSize,
-        const ui.Size(430, 932),
-      );
+      expect(DevicePresets.iPhone16Plus.portraitSize, const ui.Size(430, 932));
       expect(DevicePresets.iPhoneSe3.portraitSize, const ui.Size(375, 667));
       expect(DevicePresets.iPhoneSe3.devicePixelRatio, 2.0);
       expect(
@@ -195,21 +230,12 @@ void main() {
       );
       expect(DevicePresets.iPhoneAir.portraitSize, const ui.Size(420, 912));
       expect(DevicePresets.iPhoneAir.year, 2025);
-      expect(
-        DevicePresets.iPadPro13M5.portraitSize,
-        const ui.Size(1032, 1376),
-      );
+      expect(DevicePresets.iPadPro13M5.portraitSize, const ui.Size(1032, 1376));
       expect(DevicePresets.iPadPro13M5.kind, DeviceKind.tablet);
       expect(DevicePresets.iPadPro11M5.portraitSize, const ui.Size(834, 1210));
-      expect(
-        DevicePresets.iPadPro13M4.portraitSize,
-        const ui.Size(1032, 1376),
-      );
+      expect(DevicePresets.iPadPro13M4.portraitSize, const ui.Size(1032, 1376));
       expect(DevicePresets.iPadPro11M4.portraitSize, const ui.Size(834, 1210));
-      expect(
-        DevicePresets.iPadAir13M4.portraitSize,
-        const ui.Size(1024, 1366),
-      );
+      expect(DevicePresets.iPadAir13M4.portraitSize, const ui.Size(1024, 1366));
       expect(DevicePresets.iPadAir11M4.portraitSize, const ui.Size(820, 1180));
       expect(DevicePresets.iPadAir11M4.year, 2026);
       expect(DevicePresets.iPadAir11M2.portraitSize, const ui.Size(820, 1180));
@@ -230,10 +256,7 @@ void main() {
         const ui.Size(876, 1400),
       );
       expect(DevicePresets.galaxyTabS10Plus.kind, DeviceKind.tablet);
-      expect(
-        DevicePresets.galaxyTabS11.portraitSize,
-        const ui.Size(800, 1280),
-      );
+      expect(DevicePresets.galaxyTabS11.portraitSize, const ui.Size(800, 1280));
       expect(DevicePresets.galaxyTabS11.kind, DeviceKind.tablet);
       expect(
         DevicePresets.smallDesktopWindow.portraitSize,
@@ -362,10 +385,14 @@ void main() {
         landscape.displayFeatures!.single.bounds,
         const ui.Rect.fromLTRB(0, 390, 1104, 410),
       );
-      expect(landscape.displayFeatures!.single.type,
-          ui.DisplayFeatureType.hinge);
-      expect(landscape.displayFeatures!.single.state,
-          ui.DisplayFeatureState.postureFlat);
+      expect(
+        landscape.displayFeatures!.single.type,
+        ui.DisplayFeatureType.hinge,
+      );
+      expect(
+        landscape.displayFeatures!.single.state,
+        ui.DisplayFeatureState.postureFlat,
+      );
     });
 
     test('rotatedToLandscape and rotatedToPortrait are exact inverses', () {
@@ -375,8 +402,9 @@ void main() {
         state: ui.DisplayFeatureState.postureHalfOpened,
       );
       // Portrait 800 wide → landscape 800 tall → back.
-      final roundTripped =
-          feature.rotatedToLandscape(800).rotatedToPortrait(800);
+      final roundTripped = feature
+          .rotatedToLandscape(800)
+          .rotatedToPortrait(800);
       expect(roundTripped, feature);
     });
 
@@ -490,8 +518,10 @@ void main() {
         DevicePreset.fromJson(DevicePresets.iPhone17Pro.toJson()).year,
         2025,
       );
-      expect(DevicePresets.smallDesktopWindow.toJson().containsKey('year'),
-          isFalse);
+      expect(
+        DevicePresets.smallDesktopWindow.toJson().containsKey('year'),
+        isFalse,
+      );
     });
 
     test('fromJson throws on a non-integer year', () {

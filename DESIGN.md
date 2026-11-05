@@ -338,7 +338,7 @@ class DevicePreset {
 
 enum DeviceKind { phone, tablet, foldable, desktop, watch }
 
-/// Built-in catalog (as built: 40 static const entries generated from
+/// Built-in catalog (as built: 42 static const entries generated from
 /// `device_specs/`; unreferenced ones tree-shake, artwork included).
 abstract final class DevicePresets {
   static const DevicePreset iPhoneSe3 = ...;
