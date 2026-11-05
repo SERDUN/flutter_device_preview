@@ -42,7 +42,7 @@ await DevicePreview.controller.applyPreset(preset);
 | `brand` | string | Manufacturer, e.g. `Apple`. Groups and sorts the picker. |
 | `year` | integer | Release year, e.g. `2025`. Shown in the picker, which sorts each brand newest first, and matched by its search field. |
 | `platform` | string, **required** | `TargetPlatform` name: `android`, `fuchsia`, `iOS`, `linux`, `macOS`, `windows`. |
-| `kind` | string | `phone` (default), `tablet`, `foldable`, `desktop`. |
+| `kind` | string | `phone` (default), `tablet`, `foldable`, `desktop`, `watch`. |
 | `portraitSize` | `{width, height}`, **required** | Logical resolution, portrait. |
 | `devicePixelRatio` | number, **required** | Pixel density. The physical resolution is `portraitSize × devicePixelRatio`. |
 | `portraitPadding` | `{left, top, right, bottom}` | Safe area (`MediaQuery.padding`), portrait. |
@@ -88,6 +88,10 @@ process and holds the script that regenerates them.
 the Google Pixel specs from the official emulator device skins and a live
 emulator probe (it needs a recent Android Studio for current-generation
 skins).
+
+A watch has one orientation, the way it is worn, so `portraitSize` and the
+frame describe that one, even when it is wider than tall
+(`lokmat-appllp-5-max`).
 
 Landscape is not described separately: the whole frame is rotated a quarter
 turn at paint time, like turning the real device around. The app is laid out

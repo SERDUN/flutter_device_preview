@@ -1,5 +1,23 @@
 # Changelog
 
+## Unreleased
+
+- **Watches**: a new `DeviceKind.watch`, listed under **Watches** in the
+  DevTools picker and a touchscreen for `touchInput`'s auto mode. No system
+  bars, no keyboard.
+  - Wear OS: `wear-os-small-round` (192 dp), `wear-os-large-round` (227 dp)
+    and `wear-os-xl-round` (240 dp), the Android emulator's reference
+    watches, derived from its skins and probed on a Wear OS 6 image - a
+    circular screen inside a round body.
+  - Apple Watch: SE 3 40 mm (162x197), Series 12 42 mm (187x223) and 46 mm
+    (208x248), Ultra 4 49 mm (211x257), from the Xcode watchOS simulator's
+    device types and DeviceKit chrome - the rounded display mask and the
+    case rings.
+  - Lokmat: APPLLP 7 MAX (205x251) and APPLLP 5 MAX (320x240, worn wider than
+    tall), full Android watch phones. The panel resolutions are the sellers';
+    2.0 is the density their pixel pitch points to, no seller publishes it, and
+    the frames are drawn from product photos.
+
 ## 3.0.0
 
 The stable 3.0 release — a from-scratch rebuild of Device Preview. If you are

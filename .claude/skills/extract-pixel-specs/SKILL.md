@@ -1,6 +1,6 @@
 ---
 name: extract-pixel-specs
-description: Rebuild the Google Pixel specs in device_specs/ from the official Android emulator device skins and a live emulator probe — frame artwork, screen shape with the camera punch hole, and safe areas from a booted AVD. Use when Pixel specs need to be (re)derived from Google's own definitions.
+description: Rebuild the Google Pixel and Wear OS reference watch specs in device_specs/ from the official Android emulator device skins and a live emulator probe — frame artwork, screen shape with the camera punch hole, and safe areas from a booted AVD. Use when Pixel specs need to be (re)derived from Google's own definitions.
 ---
 
 # Android emulator → Pixel device specs
@@ -149,6 +149,36 @@ Cupertino skill: `skin` + `avd_device` per catalog id, `donor: True` for
 devices reusing another device's panel art (metrics stay hand-authored),
 `skip` for the unsupported. A missing skin or device profile is a warning
 listing what *is* available — install a newer Android Studio and re-run.
+
+## 4b. Round Wear OS watches
+
+The emulator also ships Wear OS skins (`wearos_small_round`,
+`wearos_large_round`, `wearos_xl_round`) and device profiles of the same
+names; the mapping marks them `round: True`. They are reference sizes, not
+products, so their specs are `brand: Generic` with no `year`, like the
+desktop windows, and `kind: watch`.
+
+- **Body**: a Wear OS skin paints its ring on an opaque square of flat
+  background, so the alpha bounding box is the whole canvas. The ring is
+  found instead by walking out from the screen edge along the centre row
+  until the pixels match the background in the canvas corner; the body is
+  that circle, drawn as two nested flat `<circle>`s (edge and face colors,
+  sampled like a phone's).
+- **Screen**: the display rectangle from `layout` clipped to a circle - a
+  `screenPath` of two half-turn arcs. The mask (`device_mask.png`) is not
+  read.
+- **Probe**: a Wear OS profile only boots a Wear OS image
+  (`system-images;android-36;android-wear-signed;arm64-v8a` from
+  `sdkmanager`); the script picks the newest `android-wear*` image for a
+  round entry, and a phone profile never boots an `android-wear*`, TV or
+  automotive image. Either way only images of the host's ABI are taken and
+  API levels compare as numbers (`37.1` > `37.0` > `36`). `wm size` /
+  `wm density` give the metrics as for a phone.
+  Wear OS draws no status or navigation bar over an app, so the bar wait is
+  skipped and any bar `dumpsys window displays` does list is measured
+  (none, on Wear OS 6); a watch does not rotate, so no landscape is probed
+  and the spec keeps no `landscapePadding`, no `systemUi` and no keyboard
+  heights.
 
 ## 5. Run it
 

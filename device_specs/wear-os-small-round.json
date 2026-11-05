@@ -1,0 +1,35 @@
+{
+  "id": "wear-os-small-round",
+  "name": "Wear OS Small Round",
+  "brand": "Generic",
+  "platform": "android",
+  "kind": "watch",
+  "portraitSize": {
+    "width": 192,
+    "height": 192
+  },
+  "devicePixelRatio": 2.0,
+  "portraitPadding": {
+    "left": 0,
+    "top": 0,
+    "right": 0,
+    "bottom": 0
+  },
+  "frame": {
+    "size": {
+      "width": 212,
+      "height": 212
+    },
+    "screenOffset": {
+      "x": 10,
+      "y": 10
+    },
+    "screenPath": "M 96,0 A 96,96 0 1 1 96,192 A 96,96 0 1 1 96,0 Z",
+    "body": [
+      "<svg viewBox=\"0 0 212 212\">",
+      "  <circle cx=\"106\" cy=\"106\" r=\"106\" fill=\"#343434\"/>",
+      "  <circle cx=\"106\" cy=\"106\" r=\"105\" fill=\"#3e3e3e\"/>",
+      "</svg>"
+    ]
+  }
+}

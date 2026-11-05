@@ -1,0 +1,35 @@
+{
+  "id": "wear-os-large-round",
+  "name": "Wear OS Large Round",
+  "brand": "Generic",
+  "platform": "android",
+  "kind": "watch",
+  "portraitSize": {
+    "width": 227,
+    "height": 227
+  },
+  "devicePixelRatio": 2.0,
+  "portraitPadding": {
+    "left": 0,
+    "top": 0,
+    "right": 0,
+    "bottom": 0
+  },
+  "frame": {
+    "size": {
+      "width": 249,
+      "height": 249
+    },
+    "screenOffset": {
+      "x": 11,
+      "y": 11
+    },
+    "screenPath": "M 113.5,0 A 113.5,113.5 0 1 1 113.5,227 A 113.5,113.5 0 1 1 113.5,0 Z",
+    "body": [
+      "<svg viewBox=\"0 0 249 249\">",
+      "  <circle cx=\"124.5\" cy=\"124.5\" r=\"124.5\" fill=\"#3f3f3f\"/>",
+      "  <circle cx=\"124.5\" cy=\"124.5\" r=\"123.5\" fill=\"#3e3e3e\"/>",
+      "</svg>"
+    ]
+  }
+}

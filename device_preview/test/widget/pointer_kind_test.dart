@@ -370,7 +370,7 @@ void main() {
       );
       expect(
         () => DeviceSimulation.fromJson(
-          const <String, Object?>{'deviceKind': 'watch'},
+          const <String, Object?>{'deviceKind': 'television'},
         ),
         throwsFormatException,
       );
@@ -390,6 +390,7 @@ void main() {
         DeviceKind.phone,
         DeviceKind.tablet,
         DeviceKind.foldable,
+        DeviceKind.watch,
       ]) {
         expect(
           DeviceSimulation(screenSize: screen, deviceKind: kind).simulatesTouch,

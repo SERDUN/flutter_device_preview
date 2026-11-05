@@ -335,7 +335,10 @@ class _DeviceSection extends StatelessWidget {
               ],
               selected: {orientation},
               showSelectedIcon: false,
-              onSelectionChanged: controller.hasSimulatedScreen
+              // A watch has no landscape.
+              onSelectionChanged:
+                  controller.hasSimulatedScreen &&
+                      controller.activePreset?.kind != 'watch'
                   ? (selection) => controller.setOrientation(selection.first)
                   : null,
             ),
@@ -454,11 +457,12 @@ class _PresetPickerDialog extends StatefulWidget {
 class _PresetPickerDialogState extends State<_PresetPickerDialog> {
   String _query = '';
 
-  static const _kindOrder = ['phone', 'tablet', 'foldable', 'desktop'];
+  static const _kindOrder = ['phone', 'tablet', 'foldable', 'watch', 'desktop'];
   static const _kindLabels = {
     'phone': 'Phones',
     'tablet': 'Tablets',
     'foldable': 'Foldables',
+    'watch': 'Watches',
     'desktop': 'Desktop windows',
   };
 

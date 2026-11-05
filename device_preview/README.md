@@ -30,7 +30,7 @@ Control it from **Flutter DevTools**, from **Dart**, or from your **tests**.
 | **Target platform** | Material/Cupertino behaviour across iOS, Android, macOS, Windows and Linux (debug builds only). |
 | **Device frame** | The real device drawn around your app: rounded screen corners clip it, the body is painted behind it. Artwork is `const` data on the preset — only the devices you name are compiled in — or pushed by the DevTools catalog. |
 | **System UI** | A simulated status bar and gesture pill, laid out from the device's safe areas and tinted from your app's `SystemUiOverlayStyle` — so a status bar style is visible while you write it. Toggle it off to inspect a screen bare. |
-| **Touch input** | Your mouse reported to the app as a finger, so dragging scrolls a list the way a thumb does and gestures take their touch paths. Follows the simulated device unless you say otherwise: on for a phone, tablet or foldable, off for a desktop window. |
+| **Touch input** | Your mouse reported to the app as a finger, so dragging scrolls a list the way a thumb does and gestures take their touch paths. Follows the simulated device unless you say otherwise: on for a phone, tablet, foldable or watch, off for a desktop window. |
 
 Simulation is active in debug and profile builds and completely off in release
 builds, where the package adds no behaviour of any kind.
@@ -248,9 +248,9 @@ preview does nothing, which is exactly the interaction you wanted to try.
 
 So it is on by default wherever it makes sense. `touchInput` is a tri-state
 and it starts unset, which means *auto*: the simulated device decides — a
-phone, a tablet or a foldable is a touchscreen, a desktop window is not, and
-neither is your real device when no screen is simulated. Override it either
-way when you need to:
+phone, a tablet, a foldable or a watch is a touchscreen, a desktop window is
+not, and neither is your real device when no screen is simulated. Override it
+either way when you need to:
 
 ```dart
 await c.update((s) => s.copyWith(touchInput: true));   // force touch

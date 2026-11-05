@@ -32,6 +32,7 @@ model. Requires pymupdf (`pip install pymupdf`). Usage:
 import argparse
 import glob
 import json
+import math
 import os
 import plistlib
 import re
@@ -70,6 +71,16 @@ DEVICES = {
     "apple-ipad-a16": {"sim": "iPad (A16)"},
     "apple-ipad-10": {"sim": "iPad (10th generation)"},
     "apple-ipad-mini": {"sim": "iPad mini (A17 Pro)"},
+    # Watches: frame and size from the device type, no probe (see
+    # update_watch_spec).
+    "apple-watch-se-3-40mm": {"sim": "Apple Watch SE 3 (40mm)",
+                              "watch": True},
+    "apple-watch-series-12-42mm": {"sim": "Apple Watch Series 12 (42mm)",
+                                   "watch": True},
+    "apple-watch-series-12-46mm": {"sim": "Apple Watch Series 12 (46mm)",
+                                   "watch": True},
+    "apple-watch-ultra-4-49mm": {"sim": "Apple Watch Ultra 4 (49mm)",
+                                 "watch": True},
 }
 
 # Chrome classes newer profiles declare but no installed Xcode ships art
@@ -149,13 +160,16 @@ def chrome_resources(dev, chrome_id):
     for name in (short, CHROME_FALLBACKS.get(short)):
         if name is None:
             continue
-        for root in [dev] + [os.path.join(app, "Contents/Developer")
-                             for app in
-                             sorted(glob.glob("/Applications/Xcode*.app"))]:
-            path = os.path.join(
-                root, "Platforms/iPhoneOS.platform/Library/Developer/"
-                      "DeviceKit/Chrome", f"{name}.devicechrome",
-                "Contents/Resources")
+        roots = [os.path.join(root, "Platforms/iPhoneOS.platform/Library/"
+                                    "Developer/DeviceKit/Chrome")
+                 for root in [dev] + [
+                     os.path.join(app, "Contents/Developer")
+                     for app in sorted(glob.glob("/Applications/Xcode*.app"))]]
+        # The watchOS platform installs its chrome system-wide.
+        roots.append("/Library/Developer/DeviceKit/Chrome")
+        for root in roots:
+            path = os.path.join(root, f"{name}.devicechrome",
+                                "Contents/Resources")
             if os.path.isdir(path):
                 if name != short:
                     print(f"  chrome {short} has no artwork anywhere; "
@@ -324,6 +338,20 @@ def mask_subpaths(pdf_path):
     page = doc[0]
     stream = b" ".join(doc.xref_stream(x) for x in page.get_contents())
     tokens = stream.decode("latin-1").split()
+    # Some masks (Apple Watch SE) draw the outline inside a form XObject
+    # placed with `/Name Do`: its stream is spliced in at that point, inside
+    # q/Q and under its own /Matrix, so it is read with the CTM in force
+    # where it is drawn - and not at all when it is never drawn.
+    forms = {name: xref for xref, name, *_ in page.get_xobjects()}
+
+    def form_tokens(name):
+        xref = forms.get(name.lstrip("/"))
+        if xref is None:
+            return []
+        kind, matrix = doc.xref_get_key(xref, "Matrix")
+        cm = matrix.strip("[]").split() + ["cm"] if kind == "array" else []
+        return ["q"] + cm + \
+            doc.xref_stream(xref).decode("latin-1").split() + ["Q"]
     best, current, stack = None, [], []
     ctm, saved = (1, 0, 0, 1, 0, 0), []
 
@@ -343,12 +371,24 @@ def mask_subpaths(pdf_path):
         if current and (best is None or curves > best[0]):
             best = (curves, current)
 
-    for token in tokens:
+    name = None
+    i = 0
+    while i < len(tokens):
+        token = tokens[i]
+        i += 1
         try:
             stack.append(float(token))
             continue
         except ValueError:
             pass
+        if token.startswith("/"):
+            name = token
+            continue
+        if token == "Do":
+            if name is not None:
+                tokens[i:i] = form_tokens(name)
+            name = None
+            continue
         if token == "q":
             saved.append(ctm)
         elif token == "Q":
@@ -529,18 +569,29 @@ def home_button(resources, chrome, body, face_color):
             ("circle", (cx, cy, r - stroke["width"]), face_color, 1.0)]
 
 
-def body_svg(size, shapes, radius):
-    w, h = size
-    lines = [f'<svg viewBox="0 0 {fmt(w)} {fmt(h)}">']
+def body_svg(size, shapes, radius, case=None, case_origin=(0, 0)):
+    """`case` and `case_origin` place the rings when the frame is larger
+    than the case (a watch crown sticking out); they default to the whole
+    frame."""
+    lines = [f'<svg viewBox="0 0 {fmt(size[0])} {fmt(size[1])}">']
+    w, h = case or size
+    cx0, cy0 = case_origin
     for shape in shapes:
         kind, color, opacity = shape[0], shape[-2], shape[-1]
         tag = "rect"
         if kind == "ring":
-            inset = shape[1]
-            r = max(0.0, radius - inset)
-            attrs = (f'x="{fmt(inset)}" y="{fmt(inset)}" '
-                     f'width="{fmt(w - 2 * inset)}" '
-                     f'height="{fmt(h - 2 * inset)}" rx="{fmt(r)}"')
+            # A watch ring may sit further in on the sides than at the top
+            # (the Ultra's case): an (x, y) pair rather than one inset.
+            ix, iy = shape[1] if isinstance(shape[1], tuple) else \
+                (shape[1], shape[1])
+            r = max(0.0, radius - min(ix, iy))
+            attrs = (f'x="{fmt(cx0 + ix)}" y="{fmt(cy0 + iy)}" '
+                     f'width="{fmt(w - 2 * ix)}" '
+                     f'height="{fmt(h - 2 * iy)}" rx="{fmt(r)}"')
+        elif kind == "button":
+            x, y, bw, bh = shape[1]
+            attrs = (f'x="{fmt(x)}" y="{fmt(y)}" width="{fmt(bw)}" '
+                     f'height="{fmt(bh)}" rx="{fmt(min(bw, bh) / 2)}"')
         elif kind == "circle":
             tag = "circle"
             cx, cy, r = shape[1]
@@ -558,9 +609,211 @@ def body_svg(size, shapes, radius):
     return lines
 
 
+def watch_rings(resources, chrome, logical):
+    """The bezel of a watch chrome, read off its top-left 9-slice tile.
+
+    The tile is in points at natural size, but its shapes are full-size
+    rounded rects clipped by the tile, drawn three ways depending on the
+    generation: concentric strokes centered on the screen edge (Series),
+    nested fills behind a red screen guide (Ultra), or nested fills only
+    (SE). The screen origin is the stroke rect's origin, the guide's, or
+    the innermost fill re-centered on the logical screen; a stroke of width
+    w becomes a fill w/2 outside its rect. The outermost opaque gray fill
+    is the body: anything painted before it is covered by it and dropped,
+    and insets and the border are measured from its origin. Colored shapes
+    (guides, tints) are not bezel. Returns (rings, (border_x, border_y),
+    (origin_x, origin_y)): the rings as ("ring", (ix, iy), color, opacity)
+    in paint order, the screen offset inside the case, and the case's
+    origin in tile (chrome window) coordinates.
+    """
+    tile = os.path.join(resources, chrome["images"]["topLeft"] + ".pdf")
+    page = pymupdf.open(tile)[0]
+    W, H = page.rect.width, page.rect.height
+
+    def gray(color):
+        return color is not None and max(color) - min(color) < 0.01
+
+    def opaque(d):
+        opacity = d.get("fill_opacity")
+        return opacity is None or opacity >= 1.0
+
+    rings, strokes, guide = [], [], None
+    for d in page.get_drawings():
+        rect = d["rect"]
+        fill = d.get("fill")
+        if d["type"] == "f" and fill is not None and fill[0] > 0.9 and \
+                fill[1] < 0.1 and fill[2] < 0.1:
+            guide = rect
+            continue
+        reaches = rect.x1 >= W - 1 and rect.y1 >= H - 1
+        if d["type"] == "s" and d.get("width") and reaches and \
+                gray(d.get("color")):
+            strokes.append(rect)
+            half = d["width"] / 2
+            rings.append(((rect.x0 - half, rect.y0 - half), None,
+                          d["color"]))
+        elif d["type"] == "f" and reaches and gray(d.get("fill")) and \
+                opaque(d):
+            rings.append(((rect.x0, rect.y0), rect, d["fill"]))
+    if not rings:
+        sys.exit(f"error: no rings in {tile}")
+    if guide is not None:
+        # Fill-drawn bezels with a guide (Ultra) stroke only a hairline
+        # around the body, not rings centered on the screen: the guide is
+        # the screen and the fills are the rings.
+        screen = (guide.x0, guide.y0)
+        rings = [ring for ring in rings if ring[1] is not None]
+    elif strokes:
+        screen = (strokes[0].x0, strokes[0].y0)
+    else:
+        face = next(ring[1] for ring in reversed(rings)
+                    if ring[1] is not None)
+        screen = (face.x0 + (face.width - logical[0]) / 2,
+                  face.y0 + (face.height - logical[1]) / 2)
+    body = min(range(len(rings)), key=lambda i: sum(rings[i][0]))
+    ox, oy = rings[body][0]
+    shapes = []
+    for (x, y), rect, color in rings[body:]:
+        # The screen face itself - a fill starting at the screen origin, give
+        # or take its antialiasing pixel (the tile clips it, so its size
+        # says nothing) - is covered by the app, not a ring. Strokes (rect
+        # None) are always rings, however thin.
+        if rect is not None and abs(x - screen[0]) <= 1 and \
+                abs(y - screen[1]) <= 1:
+            continue
+        shapes.append(("ring", (round(x - ox, 2), round(y - oy, 2)),
+                       color, 1.0))
+    return shapes, (round(screen[0] - ox, 2), round(screen[1] - oy, 2)), \
+        (ox, oy)
+
+
+def watch_buttons(resources, chrome, logical, origin):
+    """The Digital Crown, the side button and the Ultra's Action button.
+
+    Each `inputs` entry is a small PDF placed on the chrome window, whose
+    origin is the corner tile's: `anchor` names the window edge the offset
+    is measured from (the right edge sits at logical width + both side
+    borders) and the offset is the art's top-left corner. Its opaque gray
+    or colored fills, clipped to the art's page, become rounded rects in
+    body coordinates (the window shifted by the body's `origin` in the
+    tile); translucent highlights are left out like the rest of the
+    gradients. `onTop: false` art is drawn under the case, so only what
+    sticks out shows. Returns (under, over) shape lists.
+    """
+    sizing = chrome["images"]["sizing"]
+    window_w = logical[0] + sizing["leftWidth"] + sizing["rightWidth"]
+    under, over = [], []
+    for button in chrome.get("inputs", []):
+        art = os.path.join(resources, button["image"] + ".pdf")
+        if not os.path.exists(art):
+            continue
+        page = pymupdf.open(art)[0]
+        offset = button["offsets"]["normal"]
+        if button.get("anchor") == "right":
+            x0 = window_w + offset["x"]
+        elif button.get("anchor") == "left":
+            x0 = offset["x"]
+        else:
+            continue
+        x0 -= origin[0]
+        y0 = offset["y"] - origin[1]
+        shapes = []
+        for d in page.get_drawings():
+            opacity = d.get("fill_opacity")
+            if d["type"] != "f" or (opacity is not None and opacity < 1.0):
+                continue
+            rect = d["rect"] & page.rect
+            if rect.is_empty or rect.width < 0.5 or rect.height < 0.5:
+                continue
+            shapes.append(("button", (x0 + rect.x0, y0 + rect.y0,
+                                      rect.width, rect.height),
+                           d["fill"], 1.0))
+        (over if button.get("onTop") else under).extend(shapes)
+    return under, over
+
+
+def update_watch_spec(dev, spec_id, mapping, dry_run):
+    """An Apple Watch: size from the device type, frame from its chrome.
+
+    No probe: the probe app is UIKit, which watchOS does not have. The
+    watch profiles carry no mainScreen* keys either; the size is in the
+    capabilities' ScreenDimensionsCapability. Safe areas stay as authored
+    (zero, like the Wear OS watches): a Flutter app on a watch lays out
+    against the whole screen.
+    """
+    sim_name = mapping["sim"]
+    spec_path = os.path.join(SPECS, f"{spec_id}.json")
+    original = open(spec_path).read()
+    spec = json.loads(original)
+    resources_dir = os.path.join(find_device_type(dev, sim_name),
+                                 "Contents/Resources")
+    profile = plistlib.load(
+        open(os.path.join(resources_dir, "profile.plist"), "rb"))
+    screen = plistlib.load(
+        open(os.path.join(resources_dir, "capabilities.plist"), "rb")
+    )["capabilities"]["ScreenDimensionsCapability"]
+    scale = screen["main-screen-scale"]
+    logical = (screen["main-screen-width"] / scale,
+               screen["main-screen-height"] / scale)
+    print(f"{spec_id} (from {sim_name}, no probe)")
+
+    size = spec["portraitSize"]
+    if (size["width"], size["height"]) != logical or \
+            spec["devicePixelRatio"] != scale:
+        sys.exit(f"error: {spec_id} is {size['width']}x{size['height']}"
+                 f"@{spec['devicePixelRatio']}, simulator profile is "
+                 f"{logical[0]:g}x{logical[1]:g}@{scale:g} — fix the spec")
+
+    resources = chrome_resources(dev, profile["chromeIdentifier"])
+    chrome = load_chrome_json(resources)
+    radius = chrome["paths"]["simpleOutsideBorder"]["cornerRadiusX"]
+    shapes, border, origin = watch_rings(resources, chrome, logical)
+    body = (logical[0] + 2 * border[0], logical[1] + 2 * border[1])
+    under, over = watch_buttons(resources, chrome, logical, origin)
+    # Buttons that stick out past the case (the crown, on the right) grow
+    # the frame on that side; one sticking out left or above shifts the case,
+    # the rings and the screen offset by as much.
+    buttons = under + over
+    left = min([0.0] + [x for _, (x, _, _, _), _, _ in buttons])
+    top = min([0.0] + [y for _, (_, y, _, _), _, _ in buttons])
+    right = max([body[0]] + [x + w for _, (x, _, w, _), _, _ in buttons])
+    bottom = max([body[1]] + [y + h for _, (_, y, _, h), _, _ in buttons])
+    shift = (-left, -top)
+
+    def moved(group):
+        return [("button", (x + shift[0], y + shift[1], w, h), c, o)
+                for _, (x, y, w, h), c, o in group]
+
+    shapes = moved(under) + shapes + moved(over)
+    border = (border[0] + shift[0], border[1] + shift[1])
+    body_size = (math.ceil((right - left) * 100) / 100,
+                 math.ceil((bottom - top) * 100) / 100)
+    mask = os.path.join(resources_dir, profile["framebufferMask"] + ".pdf")
+    spec["frame"] = {
+        "size": {"width": fmt_json(body_size[0]),
+                 "height": fmt_json(body_size[1])},
+        "screenOffset": {"x": fmt_json(border[0]),
+                         "y": fmt_json(border[1])},
+        "screenPath": screen_path(mask, scale, logical, None),
+        "body": body_svg(body_size, shapes, radius, case=body,
+                         case_origin=shift),
+    }
+    print(f"  frame: body {fmt(body[0])}x{fmt(body[1])} "
+          f"border {fmt(border[0])},{fmt(border[1])}"
+          f" radius {radius} shapes {len(shapes)}")
+    if not dry_run:
+        text = json.dumps(spec, indent=2)
+        if original.endswith("\n"):
+            text += "\n"
+        open(spec_path, "w").write(text)
+
+
 # --- spec update -------------------------------------------------------------
 
 def update_spec(dev, spec_id, mapping, simctl, dry_run):
+    if mapping.get("watch"):
+        update_watch_spec(dev, spec_id, mapping, dry_run)
+        return
     sim_name = mapping["sim"]
     retarget = mapping.get("retarget")
     spec_path = os.path.join(SPECS, f"{spec_id}.json")
@@ -703,7 +956,9 @@ def main():
     ids = args.ids or sorted(DEVICES)
     simctl = None
     workdir = None
-    if not args.no_probe and any(not DEVICES[i].get("donor") for i in ids):
+    if not args.no_probe and any(not DEVICES[i].get("donor")
+                                 and not DEVICES[i].get("watch")
+                                 for i in ids):
         simctl = Simctl(dev)
         workdir = tempfile.mkdtemp(prefix="specprobe-")
         simctl.build_probe(workdir)

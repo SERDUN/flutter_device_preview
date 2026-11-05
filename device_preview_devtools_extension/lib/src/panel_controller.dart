@@ -119,7 +119,7 @@ class PresetView {
   /// Target platform name (e.g. `iOS`, `android`).
   String get platform => json['platform'] as String? ?? 'unknown';
 
-  /// Device kind (`phone`, `tablet`, `foldable`, `desktop`).
+  /// Device kind (`phone`, `tablet`, `foldable`, `desktop`, `watch`).
   String get kind => json['kind'] as String? ?? 'phone';
 
   /// Logical portrait size as a `{width, height}` map.
@@ -360,7 +360,8 @@ class PanelController extends ChangeNotifier {
 
   /// Whether the host's pointers are reported to the app as touches, or null
   /// — "auto" — to let the selected device decide (touch on a phone, tablet
-  /// or foldable; the real pointer on a desktop window or no device at all).
+  /// foldable or watch; the real pointer on a desktop window or no device at
+  /// all).
   bool? get touchInput => simulation?['touchInput'] as bool?;
 
   /// The preset matching the active simulation's `presetId`, if any.
@@ -635,6 +636,8 @@ class PanelController extends ChangeNotifier {
       if (sim['screenSize'] == null) return;
       if (sim['orientation'] == orientation) return;
       final preset = activePreset;
+      // A watch has no landscape: its screen is fixed to the wrist.
+      if (preset?.kind == 'watch') return;
       if (preset != null) {
         await _applyPresetSimulation(preset, orientation, sim);
         return;

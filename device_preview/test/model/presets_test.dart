@@ -7,15 +7,17 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('DevicePresets catalog', () {
-    test('contains the 33 documented presets with unique ids', () {
-      expect(DevicePresets.all, hasLength(33));
+    test('contains the 42 documented presets with unique ids', () {
+      expect(DevicePresets.all, hasLength(42));
       final ids = DevicePresets.all.map((p) => p.id).toSet();
-      expect(ids, hasLength(33));
+      expect(ids, hasLength(42));
     });
 
     test('every device preset declares a release year', () {
       for (final preset in DevicePresets.all) {
-        if (preset.kind == DeviceKind.desktop) continue;
+        // Generic sizes - the desktop windows, the Wear OS emulator's
+        // reference watches - are not products and have no release year.
+        if (preset.brand == 'Generic') continue;
         expect(preset.year, isNotNull, reason: preset.id);
         expect(preset.year, inInclusiveRange(2000, 2100), reason: preset.id);
       }
@@ -64,6 +66,129 @@ void main() {
       );
     });
 
+    test('every Wear OS preset is a round screen inside a round body', () {
+      final watches = DevicePresets.all
+          .where(
+            (p) =>
+                p.kind == DeviceKind.watch &&
+                p.platform == TargetPlatform.android &&
+                p.brand == 'Generic',
+          )
+          .toList();
+      expect(watches.map((p) => p.id), <String>[
+        'wear-os-large-round',
+        'wear-os-small-round',
+        'wear-os-xl-round',
+      ]);
+      for (final preset in watches) {
+        final size = preset.portraitSize;
+        expect(preset.platform, TargetPlatform.android, reason: preset.id);
+        expect(size.width, size.height, reason: preset.id);
+        // Wear OS draws no bars over an app and has no docked keyboard.
+        expect(preset.portraitPadding, EdgeInsets.zero, reason: preset.id);
+        expect(preset.systemUi, isNull, reason: preset.id);
+        expect(preset.portraitKeyboardHeight, isNull, reason: preset.id);
+        // The screen is clipped to a circle: two half-turn arcs whose radius
+        // is half the screen width.
+        final frame = preset.frame!;
+        final radius = size.width / 2;
+        expect(
+          frame.screenPath,
+          startsWith('M ${_n(radius)},0 A ${_n(radius)},${_n(radius)} '),
+          reason: preset.id,
+        );
+        expect(frame.size.width, frame.size.height, reason: preset.id);
+        expect(frame.size.width, greaterThan(size.width), reason: preset.id);
+      }
+      // The smallest is the size Wear OS design guidance starts from.
+      expect(
+        DevicePresets.byId('wear-os-small-round')!.portraitSize,
+        const Size(192, 192),
+      );
+    });
+
+    test('every Apple Watch preset is a rounded screen with no bars', () {
+      final watches = DevicePresets.all
+          .where(
+            (p) =>
+                p.kind == DeviceKind.watch && p.platform == TargetPlatform.iOS,
+          )
+          .toList();
+      expect(watches.map((p) => p.id), <String>[
+        'apple-watch-se-3-40mm',
+        'apple-watch-series-12-42mm',
+        'apple-watch-series-12-46mm',
+        'apple-watch-ultra-4-49mm',
+      ]);
+      for (final preset in watches) {
+        final size = preset.portraitSize;
+        expect(preset.devicePixelRatio, 2, reason: preset.id);
+        expect(size.height, greaterThan(size.width), reason: preset.id);
+        expect(preset.portraitPadding, EdgeInsets.zero, reason: preset.id);
+        expect(preset.systemUi, isNull, reason: preset.id);
+        expect(preset.portraitKeyboardHeight, isNull, reason: preset.id);
+        final frame = preset.frame!;
+        expect(frame.screenPath, startsWith('M '), reason: preset.id);
+        expect(frame.size.width, greaterThan(size.width), reason: preset.id);
+        expect(frame.size.height, greaterThan(size.height), reason: preset.id);
+      }
+      // The smallest Apple Watch screen is narrower than the smallest Wear OS
+      // one.
+      final se = DevicePresets.byId('apple-watch-se-3-40mm')!.portraitSize;
+      expect(se, const Size(162, 197));
+      expect(
+        se.width,
+        lessThan(DevicePresets.byId('wear-os-small-round')!.portraitSize.width),
+      );
+    });
+
+    test('every Lokmat preset keeps the panel resolution sellers list', () {
+      final watches = DevicePresets.all
+          .where((p) => p.brand == 'Lokmat')
+          .toList();
+      expect(watches.map((p) => p.id), <String>[
+        'lokmat-appllp-5-max',
+        'lokmat-appllp-7-max',
+      ]);
+      for (final preset in watches) {
+        expect(preset.kind, DeviceKind.watch, reason: preset.id);
+        expect(preset.platform, TargetPlatform.android, reason: preset.id);
+        expect(preset.portraitPadding, EdgeInsets.zero, reason: preset.id);
+        final frame = preset.frame!;
+        expect(frame.screenPath, startsWith('M '), reason: preset.id);
+        expect(frame.size.width, greaterThan(preset.portraitSize.width));
+        expect(frame.size.height, greaterThan(preset.portraitSize.height));
+      }
+      Size physical(DevicePreset preset) =>
+          preset.portraitSize * preset.devicePixelRatio;
+      expect(
+        physical(DevicePresets.byId('lokmat-appllp-7-max')!),
+        const Size(410, 502),
+      );
+      expect(
+        physical(DevicePresets.byId('lokmat-appllp-5-max')!),
+        const Size(640, 480),
+      );
+    });
+
+    test('the APPLLP 5 MAX stays wider than tall on the wrist', () {
+      final preset = DevicePresets.byId('lokmat-appllp-5-max')!;
+      for (final orientation in Orientation.values) {
+        final screen = preset.resolve(orientation: orientation).screenSize;
+        expect(screen, const Size(320, 240), reason: orientation.name);
+      }
+    });
+
+    test('a watch resolves to portrait whatever the orientation', () {
+      for (final preset in DevicePresets.all.where(
+        (p) => p.kind == DeviceKind.watch,
+      )) {
+        final landscape = preset.resolve(orientation: Orientation.landscape);
+        expect(landscape.orientation, Orientation.portrait, reason: preset.id);
+        expect(landscape.screenSize, preset.portraitSize, reason: preset.id);
+      }
+    });
+
     test('byId finds every catalog entry', () {
       for (final preset in DevicePresets.all) {
         expect(DevicePresets.byId(preset.id), same(preset));
@@ -77,10 +202,7 @@ void main() {
     test('key metrics match the researched catalog', () {
       expect(DevicePresets.iPhone16.portraitSize, const ui.Size(393, 852));
       expect(DevicePresets.iPhone16.devicePixelRatio, 3.0);
-      expect(
-        DevicePresets.iPhone16Plus.portraitSize,
-        const ui.Size(430, 932),
-      );
+      expect(DevicePresets.iPhone16Plus.portraitSize, const ui.Size(430, 932));
       expect(DevicePresets.iPhoneSe3.portraitSize, const ui.Size(375, 667));
       expect(DevicePresets.iPhoneSe3.devicePixelRatio, 2.0);
       expect(
@@ -108,21 +230,12 @@ void main() {
       );
       expect(DevicePresets.iPhoneAir.portraitSize, const ui.Size(420, 912));
       expect(DevicePresets.iPhoneAir.year, 2025);
-      expect(
-        DevicePresets.iPadPro13M5.portraitSize,
-        const ui.Size(1032, 1376),
-      );
+      expect(DevicePresets.iPadPro13M5.portraitSize, const ui.Size(1032, 1376));
       expect(DevicePresets.iPadPro13M5.kind, DeviceKind.tablet);
       expect(DevicePresets.iPadPro11M5.portraitSize, const ui.Size(834, 1210));
-      expect(
-        DevicePresets.iPadPro13M4.portraitSize,
-        const ui.Size(1032, 1376),
-      );
+      expect(DevicePresets.iPadPro13M4.portraitSize, const ui.Size(1032, 1376));
       expect(DevicePresets.iPadPro11M4.portraitSize, const ui.Size(834, 1210));
-      expect(
-        DevicePresets.iPadAir13M4.portraitSize,
-        const ui.Size(1024, 1366),
-      );
+      expect(DevicePresets.iPadAir13M4.portraitSize, const ui.Size(1024, 1366));
       expect(DevicePresets.iPadAir11M4.portraitSize, const ui.Size(820, 1180));
       expect(DevicePresets.iPadAir11M4.year, 2026);
       expect(DevicePresets.iPadAir11M2.portraitSize, const ui.Size(820, 1180));
@@ -143,10 +256,7 @@ void main() {
         const ui.Size(876, 1400),
       );
       expect(DevicePresets.galaxyTabS10Plus.kind, DeviceKind.tablet);
-      expect(
-        DevicePresets.galaxyTabS11.portraitSize,
-        const ui.Size(800, 1280),
-      );
+      expect(DevicePresets.galaxyTabS11.portraitSize, const ui.Size(800, 1280));
       expect(DevicePresets.galaxyTabS11.kind, DeviceKind.tablet);
       expect(
         DevicePresets.smallDesktopWindow.portraitSize,
@@ -275,10 +385,14 @@ void main() {
         landscape.displayFeatures!.single.bounds,
         const ui.Rect.fromLTRB(0, 390, 1104, 410),
       );
-      expect(landscape.displayFeatures!.single.type,
-          ui.DisplayFeatureType.hinge);
-      expect(landscape.displayFeatures!.single.state,
-          ui.DisplayFeatureState.postureFlat);
+      expect(
+        landscape.displayFeatures!.single.type,
+        ui.DisplayFeatureType.hinge,
+      );
+      expect(
+        landscape.displayFeatures!.single.state,
+        ui.DisplayFeatureState.postureFlat,
+      );
     });
 
     test('rotatedToLandscape and rotatedToPortrait are exact inverses', () {
@@ -288,8 +402,9 @@ void main() {
         state: ui.DisplayFeatureState.postureHalfOpened,
       );
       // Portrait 800 wide → landscape 800 tall → back.
-      final roundTripped =
-          feature.rotatedToLandscape(800).rotatedToPortrait(800);
+      final roundTripped = feature
+          .rotatedToLandscape(800)
+          .rotatedToPortrait(800);
       expect(roundTripped, feature);
     });
 
@@ -403,8 +518,10 @@ void main() {
         DevicePreset.fromJson(DevicePresets.iPhone17Pro.toJson()).year,
         2025,
       );
-      expect(DevicePresets.smallDesktopWindow.toJson().containsKey('year'),
-          isFalse);
+      expect(
+        DevicePresets.smallDesktopWindow.toJson().containsKey('year'),
+        isFalse,
+      );
     });
 
     test('fromJson throws on a non-integer year', () {
@@ -442,3 +559,7 @@ void main() {
     });
   });
 }
+
+/// A length as the spec generator prints it: no trailing `.0`.
+String _n(double value) =>
+    value == value.roundToDouble() ? '${value.toInt()}' : '$value';

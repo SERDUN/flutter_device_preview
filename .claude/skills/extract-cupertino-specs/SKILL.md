@@ -1,6 +1,6 @@
 ---
 name: extract-cupertino-specs
-description: Rebuild the Apple device specs in device_specs/ from the locally installed iOS Simulator — frame artwork from Xcode's bezel chrome, plus screen size, scale and safe areas probed from a booted simulator. Use when iPhone/iPad specs need to be (re)derived from Apple's own definitions.
+description: Rebuild the Apple device specs (iPhone, iPad, Apple Watch) in device_specs/ from the locally installed iOS Simulator — frame artwork from Xcode's bezel chrome, plus screen size, scale and safe areas probed from a booted simulator. Use when iPhone/iPad specs need to be (re)derived from Apple's own definitions.
 ---
 
 # iOS Simulator → device specs
@@ -188,6 +188,40 @@ chrome class serving several panel sizes with a composite drawn for only
 one of them (phone12 → 16 Pro Max *and* Air, tablet4 → 11" Air only) —
 stroke-stack composites lend their ring stack shifted to the panel's own
 `sizing` border, nested-fill ones fall back to the 9-slice tiles.
+
+## 4b. Apple Watch
+
+The watches go through `update_watch_spec`, marked `watch: True` in the
+mapping, and differ from a phone in four places:
+
+- **Size**: a watch `profile.plist` has no `mainScreen*` keys; the size is
+  `capabilities.plist` -> `ScreenDimensionsCapability`
+  (`main-screen-width/height/scale`).
+- **Chrome**: installed system-wide with the watchOS platform, in
+  `/Library/Developer/DeviceKit/Chrome/watch*.devicechrome`, which
+  `chrome_resources` searches after the Xcode bundles.
+- **Bezel**: read off the 9-slice top-left tile (`watch_rings`), which comes
+  in three shapes - strokes centered on the screen edge (Series: a stroke of
+  width w is a fill w/2 outside the screen), fills behind a red screen guide
+  (Ultra: a 2 pt hairline stroke around the body is not a ring; the sides
+  are thicker than the top, so a ring inset is an `(x, y)` pair), or fills
+  only (SE: the innermost fill re-centered on the screen gives the screen
+  origin). The outermost opaque gray fill is the body; what is painted
+  before it is covered by it. Colored shapes are guides, not bezel.
+- **Buttons**: unlike the phones, a watch keeps its Digital Crown, side
+  button and (Ultra) Action button - they are what makes it read as a watch.
+  `watch_buttons` places each `inputs` art on the chrome window, whose
+  origin is the corner tile's and whose right edge is the logical width
+  plus both side borders; the offset is the art's top-left from the
+  `anchor` edge. Opaque fills become pill-shaped rects (translucent
+  highlights dropped), `onTop: false` art goes under the case, and the
+  frame grows on whichever side a button sticks out (the crown: right),
+  shifting the case and the screen offset when that side is left or top.
+- **Mask**: the SE masks draw the outline inside a form XObject (`/Fm1 Do`)
+  at 2x; `mask_subpaths` reads matrix-less XObject streams with the page's.
+
+No probe: `probe.swift` is UIKit, which watchOS does not have. Safe areas
+stay zero, as on the Wear OS watches, and there is no `systemUi` or keyboard.
 
 ## 5. Run it
 
