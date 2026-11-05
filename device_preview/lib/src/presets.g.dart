@@ -18,7 +18,7 @@ part of '../presets.dart';
 /// follow real UIKit behavior (notch/island mirrored to the
 /// sides, 21px home indicator).
 ///
-/// 40 devices.
+/// 42 devices.
 abstract final class DevicePresets {
   /// iPad (10th generation).
   static const DevicePreset iPad10 = DevicePreset(
@@ -1738,6 +1738,61 @@ abstract final class DevicePresets {
     ),
   );
 
+  /// Lokmat APPLLP 5 MAX - full Android watch phone, 2.4" 640x480 TFT worn
+  /// wider than tall. The density is assumed: no seller publishes it.
+  static const DevicePreset appllp5Max = DevicePreset(
+    id: 'lokmat-appllp-5-max',
+    name: 'APPLLP 5 MAX',
+    brand: 'Lokmat',
+    year: 2024,
+    platform: TargetPlatform.android,
+    portraitSize: ui.Size(320, 240),
+    devicePixelRatio: 2.0,
+    portraitPadding: EdgeInsets.zero,
+    kind: DeviceKind.watch,
+    frame: DeviceFrame(
+      size: ui.Size(352, 264),
+      screenOffset: ui.Offset(12, 12),
+      screenPath:
+          'M 16,0 H 304 A 16,16 0 0 1 320,16 V 224 A 16,16 0 0 1 304,240 H 16 A 16,16 0 0 1 0,224 V 16 A 16,16 0 0 1 16,0 Z',
+      body:
+          '<svg viewBox="0 0 352 264">\n'
+          '  <rect x="0" y="0" width="344" height="264" rx="26" fill="#1f1f1f"/>\n'
+          '  <rect x="5" y="5" width="334" height="254" rx="22" fill="#000000"/>\n'
+          '  <rect x="342" y="56" width="10" height="56" rx="5" fill="#2a2a2a"/>\n'
+          '  <rect x="342" y="150" width="10" height="56" rx="5" fill="#2a2a2a"/>\n'
+          '</svg>',
+    ),
+  );
+
+  /// Lokmat APPLLP 7 MAX - full Android watch phone, 2.06" 410x502 AMOLED.
+  /// The density is assumed: no seller publishes it.
+  static const DevicePreset appllp7Max = DevicePreset(
+    id: 'lokmat-appllp-7-max',
+    name: 'APPLLP 7 MAX',
+    brand: 'Lokmat',
+    year: 2025,
+    platform: TargetPlatform.android,
+    portraitSize: ui.Size(205, 251),
+    devicePixelRatio: 2.0,
+    portraitPadding: EdgeInsets.zero,
+    kind: DeviceKind.watch,
+    frame: DeviceFrame(
+      size: ui.Size(265, 299),
+      screenOffset: ui.Offset(30, 24),
+      screenPath:
+          'M 36,0 H 169 A 36,36 0 0 1 205,36 V 215 A 36,36 0 0 1 169,251 H 36 A 36,36 0 0 1 0,215 V 36 A 36,36 0 0 1 36,0 Z',
+      body:
+          '<svg viewBox="0 0 265 299">\n'
+          '  <rect x="6" y="0" width="249" height="299" rx="58" fill="#1f1f1f"/>\n'
+          '  <rect x="16" y="10" width="229" height="279" rx="48" fill="#000000"/>\n'
+          '  <rect x="0" y="86" width="8" height="58" rx="4" fill="#2a2a2a"/>\n'
+          '  <rect x="253" y="70" width="12" height="44" rx="6" fill="#2a2a2a"/>\n'
+          '  <rect x="253" y="170" width="8" height="52" rx="4" fill="#2a2a2a"/>\n'
+          '</svg>',
+    ),
+  );
+
   /// Samsung Galaxy S24 — punch-hole, gesture navigation.
   static const DevicePreset galaxyS24 = DevicePreset(
     id: 'samsung-galaxy-s24',
@@ -2379,6 +2434,8 @@ abstract final class DevicePresets {
     pixel10,
     pixel10ProFold,
     pixel9,
+    appllp5Max,
+    appllp7Max,
     galaxyS24,
     galaxyS25,
     galaxyTabS10Plus,

@@ -77,6 +77,12 @@ const Map<String, String> kDescriptions = <String, String>{
   'apple-watch-series-12-42mm': 'Apple Watch Series 12, 42 mm case.',
   'apple-watch-series-12-46mm': 'Apple Watch Series 12, 46 mm case.',
   'apple-watch-ultra-4-49mm': 'Apple Watch Ultra 4, 49 mm case.',
+  'lokmat-appllp-5-max':
+      'Lokmat APPLLP 5 MAX - full Android watch phone, 2.4" 640x480 TFT '
+      'worn wider than tall. The density is assumed: no seller publishes it.',
+  'lokmat-appllp-7-max':
+      'Lokmat APPLLP 7 MAX - full Android watch phone, 2.06" 410x502 AMOLED. '
+      'The density is assumed: no seller publishes it.',
   'wear-os-small-round':
       'Wear OS Small Round — the emulator profile Wear OS design guidance '
       'starts from.',

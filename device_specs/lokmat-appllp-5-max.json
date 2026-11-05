@@ -1,0 +1,38 @@
+{
+  "id": "lokmat-appllp-5-max",
+  "name": "APPLLP 5 MAX",
+  "brand": "Lokmat",
+  "year": 2024,
+  "platform": "android",
+  "kind": "watch",
+  "portraitSize": {
+    "width": 320,
+    "height": 240
+  },
+  "devicePixelRatio": 2.0,
+  "portraitPadding": {
+    "left": 0,
+    "top": 0,
+    "right": 0,
+    "bottom": 0
+  },
+  "frame": {
+    "size": {
+      "width": 352,
+      "height": 264
+    },
+    "screenOffset": {
+      "x": 12,
+      "y": 12
+    },
+    "screenPath": "M 16,0 H 304 A 16,16 0 0 1 320,16 V 224 A 16,16 0 0 1 304,240 H 16 A 16,16 0 0 1 0,224 V 16 A 16,16 0 0 1 16,0 Z",
+    "body": [
+      "<svg viewBox=\"0 0 352 264\">",
+      "  <rect x=\"0\" y=\"0\" width=\"344\" height=\"264\" rx=\"26\" fill=\"#1f1f1f\"/>",
+      "  <rect x=\"5\" y=\"5\" width=\"334\" height=\"254\" rx=\"22\" fill=\"#000000\"/>",
+      "  <rect x=\"342\" y=\"56\" width=\"10\" height=\"56\" rx=\"5\" fill=\"#2a2a2a\"/>",
+      "  <rect x=\"342\" y=\"150\" width=\"10\" height=\"56\" rx=\"5\" fill=\"#2a2a2a\"/>",
+      "</svg>"
+    ]
+  }
+}
